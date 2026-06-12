@@ -370,7 +370,7 @@ export default function LayoutWorkspace({ proker, profile }) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (window.confirm(`Hapus ${item.text} dari denah?`)) deleteFloorItem(item.id);
+                            deleteFloorItem(item.id);
                           }}
                           className="p-0.5 text-white/50 hover:text-red-300 rounded hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-all"
                           title="Hapus barang"
