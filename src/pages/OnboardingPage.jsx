@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 const BEM_DEPARTMENTS = {
@@ -73,6 +73,20 @@ export default function OnboardingPage() {
         photoURL: user.photoURL || '',
         createdAt: new Date().toISOString(),
       });
+      
+      try {
+        await addDoc(collection(db, 'activities'), {
+          type: 'onboarding',
+          userName: name.trim(),
+          userRole: jabatan,
+          userPhoto: user.photoURL || '',
+          description: `bergabung sebagai ${jabatan} di divisi ${divisi}`,
+          createdAt: serverTimestamp(),
+        });
+      } catch (errLog) {
+        console.error("Gagal membuat activity log:", errLog);
+      }
+      
       // useAuth hook (onSnapshot) akan otomatis mendeteksi perubahan profile
       // dan App router akan otomatis me-redirect ke halaman utama (/)
     } catch (err) {
