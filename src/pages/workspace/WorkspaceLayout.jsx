@@ -28,7 +28,7 @@ import LPJ from './views/LPJ';
 export default function WorkspaceLayout() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, logout } = useAuth();
   const { proker, loading, updateProkerDetails } = useProker(id);
 
   const [activeTab, setActiveTab] = useState('overview');
@@ -68,7 +68,7 @@ export default function WorkspaceLayout() {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
       navigate('/login');
     } catch (err) {
       console.error(err);

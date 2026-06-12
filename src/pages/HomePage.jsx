@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { Plus, Calendar, MapPin, Users, LogOut, Trash, ArrowRight, LayoutGrid, Search, Activity, Clock, TrendingUp, Sparkles, UserPlus, FolderKanban, ClipboardCheck } from 'lucide-react';
 
 export default function HomePage() {
-  const { user, profile } = useAuth();
+  const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
   const [prokers, setProkers] = useState([]);
   const [loadingProkers, setLoadingProkers] = useState(true);
@@ -99,7 +99,7 @@ export default function HomePage() {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
       navigate('/login');
     } catch (err) {
       console.error(err);
