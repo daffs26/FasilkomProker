@@ -5,7 +5,7 @@ import { collection, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc } from 
 import { db, auth, storage } from '../firebase/config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { signOut } from 'firebase/auth';
-import { Plus, Calendar, MapPin, Users, LogOut, Trash, ArrowRight, LayoutGrid, Search, Activity, Clock, TrendingUp, Sparkles, UserPlus, FolderKanban, ClipboardCheck, FileText, ExternalLink, FolderOpen, Sun, Moon } from 'lucide-react';
+import { Plus, Calendar, MapPin, Users, LogOut, Trash, ArrowRight, LayoutGrid, Search, Activity, Clock, TrendingUp, Sparkles, UserPlus, FolderKanban, ClipboardCheck, FileText, ExternalLink, FolderOpen, Sun, Moon, X } from 'lucide-react';
 import LogoBEM from '../assets/logo-bem.png';
 
 
@@ -82,6 +82,12 @@ export default function HomePage() {
   const [ketuaPelaksanaId, setKetuaPelaksanaId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // Custom modals state
+  const [prokerToDelete, setProkerToDelete] = useState(null);
+  const [docToDelete, setDocToDelete] = useState(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [fullActivitiesList, setFullActivitiesList] = useState([]);
 
   // Fetch prokers in real-time
   useEffect(() => {
@@ -168,6 +174,7 @@ export default function HomePage() {
         const timeB = b.createdAt?.seconds || b.createdAt?.toMillis?.() || 0;
         return timeB - timeA;
       });
+      setFullActivitiesList(list);
       setActivitiesList(list.slice(0, 8));
       setLoadingActivities(false);
     }, (err) => {
@@ -295,30 +302,9 @@ export default function HomePage() {
   const handleDeleteGlobalDoc = async (e, docId, docName) => {
     e.stopPropagation();
     if (profile?.divisi !== 'BPH') {
-      return alert('Hanya pengurus BPH yang dapat menghapus dokumen.');
+      return;
     }
-    if (window.confirm(`Apakah Anda yakin ingin menghapus dokumen "${docName}" dari BEM Drive?`)) {
-      try {
-        await deleteDoc(doc(db, 'global_documents', docId));
-
-        // Log activity
-        try {
-          await addDoc(collection(db, 'activities'), {
-            type: 'doc_delete',
-            userName: profile.name,
-            userRole: profile.jabatan,
-            userPhoto: profile.photoURL || '',
-            description: `menghapus dokumen BEM Drive "${docName}"`,
-            createdAt: serverTimestamp(),
-          });
-        } catch (errLog) {
-          console.error("Gagal mencatat log aktivitas:", errLog);
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Gagal menghapus dokumen.');
-      }
-    }
+    setDocToDelete({ id: docId, name: docName });
   };
 
   const handleLogout = async () => {
@@ -396,28 +382,7 @@ export default function HomePage() {
 
   const handleDeleteProker = async (e, prokerId, prokerName) => {
     e.stopPropagation(); // Cegah click card redirect
-    if (window.confirm(`Apakah Anda yakin ingin menghapus program kerja "${prokerName}" beserta semua datanya?`)) {
-      try {
-        await deleteDoc(doc(db, 'prokers', prokerId));
-
-        // Log activity
-        try {
-          await addDoc(collection(db, 'activities'), {
-            type: 'proker_delete',
-            userName: profile.name,
-            userRole: profile.jabatan,
-            userPhoto: profile.photoURL || '',
-            description: `menghapus program kerja "${prokerName}"`,
-            createdAt: serverTimestamp(),
-          });
-        } catch (errLog) {
-          console.error("Gagal mencatat log aktivitas:", errLog);
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Gagal menghapus program kerja.');
-      }
-    }
+    setProkerToDelete({ id: prokerId, name: prokerName });
   };
 
   const getStatusColor = (status) => {
@@ -987,9 +952,17 @@ export default function HomePage() {
 
             {/* WIDGET: AKTIVITAS TERBARU (REAL-TIME AUDIT LOG) */}
             <div className="card p-6 bg-surface-800 border border-white/5">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                <Activity className="w-4.5 h-4.5 text-primary-400" /> Aktivitas Terbaru
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <Activity className="w-4.5 h-4.5 text-primary-400" /> Aktivitas Terbaru
+                </h3>
+                <button
+                  onClick={() => setIsHistoryOpen(true)}
+                  className="text-[10px] text-primary-400 hover:text-primary-300 font-semibold transition-colors flex items-center gap-1 bg-primary-500/10 px-2 py-1 rounded-lg border border-primary-500/20"
+                >
+                  Riwayat Event
+                </button>
+              </div>
 
               {loadingActivities ? (
                 <div className="space-y-4">
@@ -1257,6 +1230,187 @@ export default function HomePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Modal untuk Konfirmasi Penghapusan Proker */}
+      {prokerToDelete && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-surface-900/80 backdrop-blur-sm flex items-center justify-center p-4 py-10 animate-fade-in">
+          <div className="card w-full max-w-md p-6 relative overflow-hidden animate-slide-up shadow-2xl border-white/10 bg-surface-800 my-auto">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center flex-shrink-0">
+                <Trash className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-white mb-2">Hapus Program Kerja?</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                  Apakah Anda yakin ingin menghapus program kerja <span className="text-white font-semibold">"{prokerToDelete.name}"</span> beserta semua datanya? Tindakan ini tidak dapat dibatalkan.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5">
+              <button
+                type="button"
+                onClick={() => setProkerToDelete(null)}
+                className="btn-secondary py-2 px-4 text-sm"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const id = prokerToDelete.id;
+                  const name = prokerToDelete.name;
+                  setProkerToDelete(null);
+                  try {
+                    await deleteDoc(doc(db, 'prokers', id));
+                    await addDoc(collection(db, 'activities'), {
+                      type: 'proker_delete',
+                      userName: profile.name,
+                      userRole: profile.jabatan,
+                      userPhoto: profile.photoURL || '',
+                      description: `menghapus program kerja "${name}" beserta semua datanya`,
+                      createdAt: serverTimestamp(),
+                    });
+                  } catch (err) {
+                    console.error(err);
+                    setError('Gagal menghapus program kerja.');
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-500 text-white rounded-xl py-2 px-4 text-sm font-semibold transition-all duration-200"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Modal untuk Konfirmasi Penghapusan Dokumen BEM Drive */}
+      {docToDelete && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-surface-900/80 backdrop-blur-sm flex items-center justify-center p-4 py-10 animate-fade-in">
+          <div className="card w-full max-w-md p-6 relative overflow-hidden animate-slide-up shadow-2xl border-white/10 bg-surface-800 my-auto">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center flex-shrink-0">
+                <Trash className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-white mb-2">Hapus Dokumen BEM Drive?</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                  Apakah Anda yakin ingin menghapus dokumen <span className="text-white font-semibold">"{docToDelete.name}"</span> dari BEM Drive?
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5">
+              <button
+                type="button"
+                onClick={() => setDocToDelete(null)}
+                className="btn-secondary py-2 px-4 text-sm"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const id = docToDelete.id;
+                  const name = docToDelete.name;
+                  setDocToDelete(null);
+                  try {
+                    await deleteDoc(doc(db, 'global_documents', id));
+                    await addDoc(collection(db, 'activities'), {
+                      type: 'doc_delete',
+                      userName: profile.name,
+                      userRole: profile.jabatan,
+                      userPhoto: profile.photoURL || '',
+                      description: `menghapus dokumen BEM Drive "${name}"`,
+                      createdAt: serverTimestamp(),
+                    });
+                  } catch (err) {
+                    console.error(err);
+                    setErrorDoc('Gagal menghapus dokumen.');
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-500 text-white rounded-xl py-2 px-4 text-sm font-semibold transition-all duration-200"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Histori Pembuatan & Penghapusan Event */}
+      {isHistoryOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-surface-900/80 backdrop-blur-sm flex items-center justify-center p-4 py-10 animate-fade-in">
+          <div className="card w-full max-w-2xl p-6 relative overflow-hidden animate-slide-up shadow-2xl border-white/10 bg-surface-800 my-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-6">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary-400" />
+                <h3 className="text-xl font-bold text-white">Histori Pembuatan & Penghapusan Event</h3>
+              </div>
+              <button
+                onClick={() => setIsHistoryOpen(false)}
+                className="p-1.5 hover:bg-white/5 text-slate-400 hover:text-white rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 max-h-[450px] overflow-y-auto pr-1">
+              {(() => {
+                const eventHistory = fullActivitiesList.filter(
+                  (act) => act.type === 'proker_create' || act.type === 'proker_delete'
+                );
+
+                if (eventHistory.length === 0) {
+                  return (
+                    <div className="text-center py-12 text-slate-500 text-sm">
+                      Belum ada riwayat pembuatan atau penghapusan program kerja.
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-3">
+                    {eventHistory.map((act) => {
+                      const isCreate = act.type === 'proker_create';
+                      return (
+                        <div key={act.id} className="flex items-start gap-4 p-4 rounded-2xl bg-surface-900/40 border border-white/5 transition-all hover:bg-surface-900/60">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 border ${
+                            isCreate 
+                              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                              : 'bg-red-500/10 border-red-500/20 text-red-400'
+                          }`}>
+                            {isCreate ? <Plus className="w-4.5 h-4.5" /> : <Trash className="w-4.5 h-4.5" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm text-slate-200">
+                              <span className="font-bold text-white mr-1.5">{act.userName}</span>
+                              <span className="text-slate-400">({act.userRole})</span>
+                              <div className="text-slate-300 mt-1 font-medium leading-relaxed">{act.description}</div>
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-2 flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-slate-600" />
+                              {getRelativeTime(act.createdAt)}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+
+            <div className="flex items-center justify-end pt-6 border-t border-white/5 mt-6">
+              <button
+                onClick={() => setIsHistoryOpen(false)}
+                className="btn-secondary py-2 px-6 text-sm"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db, auth } from '../../../firebase/config';
 import { doc, updateDoc, arrayUnion, arrayRemove, collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
-import { Users, UserPlus, UserMinus, ShieldAlert, Crown, User } from 'lucide-react';
+import { Users, UserPlus, UserMinus, ShieldAlert, Crown, User, X } from 'lucide-react';
 
 
 const MOCK_BEM_USERS = [
@@ -27,6 +27,7 @@ export default function Panitia({ proker, currentProfile, updateProkerDetails })
   const [selectedUserId, setSelectedUserId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [memberToRemove, setMemberToRemove] = useState(null);
 
   // Fetch all BEM members
   useEffect(() => {
@@ -167,40 +168,7 @@ export default function Panitia({ proker, currentProfile, updateProkerDetails })
   };
 
   const handleRemove = async (member) => {
-    if (!window.confirm(`Apakah Anda yakin ingin mengeluarkan ${member.name} dari kepanitiaan?`)) {
-      return;
-    }
-
-    try {
-      // Find all user IDs in rawUsersList that share the same name and jabatan
-      const matchingIds = rawUsersList
-        .filter(u => 
-          u.name?.toLowerCase().trim() === member.name?.toLowerCase().trim() &&
-          u.jabatan?.toLowerCase().trim() === member.jabatan?.toLowerCase().trim()
-        )
-        .map(u => u.id);
-
-      const updatedMembers = (proker.members || []).filter(id => !matchingIds.includes(id));
-
-      // Update members array in Firestore
-      const docRef = doc(db, 'prokers', proker.id);
-      await updateDoc(docRef, {
-        members: updatedMembers
-      });
-
-      // Log activity
-      await addDoc(collection(db, 'activities'), {
-        type: 'proker_member_remove',
-        userName: currentProfile.name,
-        userRole: currentProfile.jabatan,
-        userPhoto: currentProfile.photoURL || '',
-        description: `mengeluarkan ${member.name} dari Kepanitiaan proker "${proker.name}"`,
-        createdAt: serverTimestamp(),
-      });
-    } catch (err) {
-      console.error(err);
-      alert('Gagal mengeluarkan anggota.');
-    }
+    setMemberToRemove(member);
   };
 
   return (
@@ -356,6 +324,74 @@ export default function Panitia({ proker, currentProfile, updateProkerDetails })
           </div>
         )}
       </div>
+
+      {/* Custom Modal untuk Konfirmasi Mengeluarkan Anggota Panitia */}
+      {memberToRemove && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-surface-900/80 backdrop-blur-sm flex items-center justify-center p-4 py-10 animate-fade-in">
+          <div className="card w-full max-w-md p-6 relative overflow-hidden animate-slide-up shadow-2xl border-white/10 bg-surface-800 my-auto">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center flex-shrink-0">
+                <UserMinus className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-white mb-2">Keluarkan Anggota Panitia?</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                  Apakah Anda yakin ingin mengeluarkan <span className="text-white font-semibold">"{memberToRemove.name}"</span> ({memberToRemove.jabatan || 'Anggota'}) dari kepanitiaan program kerja ini?
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5">
+              <button
+                type="button"
+                onClick={() => setMemberToRemove(null)}
+                className="btn-secondary py-2 px-4 text-sm"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const member = memberToRemove;
+                  setMemberToRemove(null);
+                  try {
+                    // Find all user IDs in rawUsersList that share the same name and jabatan
+                    const matchingIds = rawUsersList
+                      .filter(u => 
+                        u.name?.toLowerCase().trim() === member.name?.toLowerCase().trim() &&
+                        u.jabatan?.toLowerCase().trim() === member.jabatan?.toLowerCase().trim()
+                      )
+                      .map(u => u.id);
+
+                    const updatedMembers = (proker.members || []).filter(id => !matchingIds.includes(id));
+
+                    // Update members array in Firestore
+                    const docRef = doc(db, 'prokers', proker.id);
+                    await updateDoc(docRef, {
+                      members: updatedMembers
+                    });
+
+                    // Log activity
+                    await addDoc(collection(db, 'activities'), {
+                      type: 'proker_member_remove',
+                      userName: currentProfile.name,
+                      userRole: currentProfile.jabatan,
+                      userPhoto: currentProfile.photoURL || '',
+                      description: `mengeluarkan ${member.name} dari Kepanitiaan proker "${proker.name}"`,
+                      createdAt: serverTimestamp(),
+                    });
+                  } catch (err) {
+                    console.error(err);
+                    setError('Gagal mengeluarkan anggota.');
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-500 text-white rounded-xl py-2 px-4 text-sm font-semibold transition-all duration-200"
+              >
+                Ya, Keluarkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

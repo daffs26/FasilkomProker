@@ -19,6 +19,7 @@ export default function LayoutWorkspace({ proker, profile }) {
   const [activeLayoutId, setActiveLayoutId] = useState('');
   const [newLayoutName, setNewLayoutName] = useState('');
   const [isAddingLayout, setIsAddingLayout] = useState(false);
+  const [layoutToDelete, setLayoutToDelete] = useState(null);
 
   // 2. Floor Plan Items
   const { data: floorPlan, addItem: addFloorItem, updateItem: updateFloorItem, deleteItem: deleteFloorItem } =
@@ -52,19 +53,7 @@ export default function LayoutWorkspace({ proker, profile }) {
   };
 
   const handleDeleteLayout = async (layoutId, layoutName) => {
-    if (window.confirm(`Apakah Anda yakin ingin menghapus sesi layout "${layoutName}"? Semua barang di dalamnya akan terhapus.`)) {
-      // Delete layout session
-      await deleteLayout(layoutId);
-      // Delete all items belonging to this layout
-      const itemsToDelete = floorPlan.filter(item => item.layoutId === layoutId);
-      for (const item of itemsToDelete) {
-        await deleteFloorItem(item.id);
-      }
-      if (activeLayoutId === layoutId) {
-        const remaining = layouts.filter(l => l.id !== layoutId);
-        setActiveLayoutId(remaining.length > 0 ? remaining[0].id : '');
-      }
-    }
+    setLayoutToDelete({ id: layoutId, name: layoutName });
   };
 
   // Click Canvas to Add Item
@@ -391,6 +380,55 @@ export default function LayoutWorkspace({ proker, profile }) {
           </div>
         </div>
       </div>
+
+      {/* Custom Modal untuk Konfirmasi Penghapusan Sesi Layout */}
+      {layoutToDelete && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-surface-900/80 backdrop-blur-sm flex items-center justify-center p-4 py-10 animate-fade-in">
+          <div className="card w-full max-w-md p-6 relative overflow-hidden animate-slide-up shadow-2xl border-white/10 bg-surface-800 my-auto">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center flex-shrink-0">
+                <Trash className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-white mb-2">Hapus Sesi Layout?</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                  Apakah Anda yakin ingin menghapus sesi layout <span className="text-white font-semibold">"{layoutToDelete.name}"</span>? Semua barang di dalamnya akan terhapus secara permanen.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5">
+              <button
+                type="button"
+                onClick={() => setLayoutToDelete(null)}
+                className="btn-secondary py-2 px-4 text-sm"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const id = layoutToDelete.id;
+                  setLayoutToDelete(null);
+                  // Delete layout session
+                  await deleteLayout(id);
+                  // Delete all items belonging to this layout
+                  const itemsToDelete = floorPlan.filter(item => item.layoutId === id);
+                  for (const item of itemsToDelete) {
+                    await deleteFloorItem(item.id);
+                  }
+                  if (activeLayoutId === id) {
+                    const remaining = layouts.filter(l => l.id !== id);
+                    setActiveLayoutId(remaining.length > 0 ? remaining[0].id : '');
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-500 text-white rounded-xl py-2 px-4 text-sm font-semibold transition-all duration-200"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

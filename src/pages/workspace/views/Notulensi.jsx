@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useProkerSubcollection } from '../../../hooks/useProker';
-import { FileText, Plus, Trash, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, Plus, Trash, Calendar, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 
 export default function Notulensi({ proker, profile }) {
@@ -11,6 +11,7 @@ export default function Notulensi({ proker, profile }) {
   const [date, setDate] = useState('');
   const [content, setContent] = useState('');
   const [expandedId, setExpandedId] = useState(null);
+  const [minutesToDelete, setMinutesToDelete] = useState(null);
 
   const handleAddMinutes = async (e) => {
     e.preventDefault();
@@ -80,7 +81,7 @@ export default function Notulensi({ proker, profile }) {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (window.confirm('Hapus notulensi ini?')) deleteMinutes(item.id);
+                              setMinutesToDelete(item);
                             }}
                             className="p-1.5 text-slate-500 hover:text-red-400 rounded-lg hover:bg-white/5"
                             title="Hapus"
@@ -151,6 +152,45 @@ export default function Notulensi({ proker, profile }) {
           </form>
         </div>
       </div>
+
+      {/* Custom Modal untuk Konfirmasi Penghapusan Notulensi */}
+      {minutesToDelete && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-surface-900/80 backdrop-blur-sm flex items-center justify-center p-4 py-10 animate-fade-in">
+          <div className="card w-full max-w-md p-6 relative overflow-hidden animate-slide-up shadow-2xl border-white/10 bg-surface-800 my-auto">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center flex-shrink-0">
+                <Trash className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-white mb-2">Hapus Notulensi Rapat?</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                  Apakah Anda yakin ingin menghapus notulensi rapat <span className="text-white font-semibold">"{minutesToDelete.title}"</span>? Tindakan ini tidak dapat dibatalkan.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5">
+              <button
+                type="button"
+                onClick={() => setMinutesToDelete(null)}
+                className="btn-secondary py-2 px-4 text-sm"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const id = minutesToDelete.id;
+                  setMinutesToDelete(null);
+                  await deleteMinutes(id);
+                }}
+                className="bg-red-600 hover:bg-red-500 text-white rounded-xl py-2 px-4 text-sm font-semibold transition-all duration-200"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

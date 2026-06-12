@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useProkerSubcollection } from '../../../hooks/useProker';
 import { useAuth } from '../../../hooks/useAuth';
-import { FileText, Plus, Trash, ExternalLink, Search } from 'lucide-react';
+import { FileText, Plus, Trash, ExternalLink, Search, X } from 'lucide-react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, storage } from '../../../firebase/config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -20,6 +20,7 @@ export default function DokumenProker({ proker, profile, user }) {
   // Local filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
+  const [docToDelete, setDocToDelete] = useState(null);
 
   const handleAddDocument = async (e) => {
     e.preventDefault();
@@ -87,28 +88,7 @@ export default function DokumenProker({ proker, profile, user }) {
   };
 
   const handleDeleteDocument = async (docId, docName) => {
-    if (window.confirm(`Apakah Anda yakin ingin menghapus dokumen "${docName}" dari proker ini?`)) {
-      try {
-        await deleteDocItem(docId);
-
-        // Log activity
-        try {
-          await addDoc(collection(db, 'activities'), {
-            type: 'proker_doc_delete',
-            userName: profile.name,
-            userRole: profile.jabatan,
-            userPhoto: profile.photoURL || '',
-            description: `menghapus dokumen proker "${proker.name}": "${docName}"`,
-            createdAt: serverTimestamp(),
-          });
-        } catch (errLog) {
-          console.error("Gagal mencatat log aktivitas:", errLog);
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Gagal menghapus dokumen.');
-      }
-    }
+    setDocToDelete({ id: docId, name: docName });
   };
 
   const filteredDocs = documents.filter((docItem) => {
@@ -332,6 +312,65 @@ export default function DokumenProker({ proker, profile, user }) {
           </form>
         </div>
       </div>
+
+      {/* Custom Modal untuk Konfirmasi Penghapusan Dokumen Proker */}
+      {docToDelete && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-surface-900/80 backdrop-blur-sm flex items-center justify-center p-4 py-10 animate-fade-in">
+          <div className="card w-full max-w-md p-6 relative overflow-hidden animate-slide-up shadow-2xl border-white/10 bg-surface-800 my-auto">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center flex-shrink-0">
+                <Trash className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-white mb-2">Hapus Dokumen Proker?</h3>
+                <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                  Apakah Anda yakin ingin menghapus dokumen <span className="text-white font-semibold">"{docToDelete.name}"</span> dari proker ini?
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5">
+              <button
+                type="button"
+                onClick={() => setDocToDelete(null)}
+                className="btn-secondary py-2 px-4 text-sm"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const id = docToDelete.id;
+                  const name = docToDelete.name;
+                  setDocToDelete(null);
+                  try {
+                    await deleteDocItem(id);
+
+                    // Log activity
+                    try {
+                      await addDoc(collection(db, 'activities'), {
+                        type: 'proker_doc_delete',
+                        userName: profile.name,
+                        userRole: profile.jabatan,
+                        userPhoto: profile.photoURL || '',
+                        description: `menghapus dokumen proker "${proker.name}": "${name}"`,
+                        createdAt: serverTimestamp(),
+                      });
+                    } catch (errLog) {
+                      console.error("Gagal mencatat log aktivitas:", errLog);
+                    }
+                  } catch (err) {
+                    console.error(err);
+                    setError('Gagal menghapus dokumen.');
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-500 text-white rounded-xl py-2 px-4 text-sm font-semibold transition-all duration-200"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
