@@ -8,7 +8,7 @@ import { collection, onSnapshot } from 'firebase/firestore';
 
 // Icons
 import {
-  Home, LogOut, LayoutDashboard, Lightbulb, FileText, Users,
+  Home, LogOut, LayoutDashboard, Lightbulb, FileText, Users, Map,
   CalendarDays, Package, Share2, Image, Coffee, Heart, Flame, ShieldAlert, FileSpreadsheet, Menu, X, Sun, Moon
 } from 'lucide-react';
 import LogoBEM from '../../assets/logo-bem.png';
