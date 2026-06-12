@@ -14,6 +14,8 @@ export default function DivisiAcara({ proker }) {
   const { profile } = useAuth();
   const [subTab, setSubTab] = useState('rundown');
 
+  const canEdit = profile.divisi === 'BPH' || profile.divisi === 'PSDM' || profile.divisi === 'MINAT BAKAT';
+
   // Subcollections
   const { data: rundown, addItem: addRundown, deleteItem: deleteRundown } = 
     useProkerSubcollection(proker.id, 'rundown', 'time', 'asc');
@@ -34,6 +36,7 @@ export default function DivisiAcara({ proker }) {
   // Submit Rundown
   const handleAddRundown = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!runTime.trim() || !runAct.trim() || !runPic.trim()) return;
     await addRundown({
       time: runTime.trim(),
@@ -49,6 +52,7 @@ export default function DivisiAcara({ proker }) {
 
   // Click Canvas to Add Item
   const handleCanvasClick = async (e) => {
+    if (!canEdit) return;
     if (!itemText.trim()) return alert('Masukkan label/nama barang terlebih dahulu sebelum meletakkannya di denah.');
     
     const rect = canvasRef.current.getBoundingClientRect();
@@ -120,7 +124,7 @@ export default function DivisiAcara({ proker }) {
                           )}
                         </div>
 
-                        {profile.divisi === 'Acara' || profile.divisi === 'BPH' ? (
+                        {canEdit ? (
                           <button
                             onClick={() => deleteRundown(item.id)}
                             className="p-1 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
@@ -149,6 +153,7 @@ export default function DivisiAcara({ proker }) {
                   onChange={(e) => setRunTime(e.target.value)}
                   placeholder="Contoh: 08:30 - 09:00"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -160,6 +165,7 @@ export default function DivisiAcara({ proker }) {
                   onChange={(e) => setRunAct(e.target.value)}
                   placeholder="Contoh: Sambutan Ketua BEM"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -171,6 +177,7 @@ export default function DivisiAcara({ proker }) {
                   onChange={(e) => setRunPic(e.target.value)}
                   placeholder="Contoh: Farhan / Divisi Acara"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -181,9 +188,14 @@ export default function DivisiAcara({ proker }) {
                   onChange={(e) => setRunNotes(e.target.value)}
                   placeholder="Contoh: Siapkan mic wireless cadangan"
                   className="input h-20 resize-none text-xs"
+                  disabled={!canEdit}
                 />
               </div>
-              <button type="submit" className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2">
+              <button
+                type="submit"
+                disabled={!canEdit}
+                className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Plus className="w-4 h-4" /> Masukkan Rundown
               </button>
             </form>
@@ -204,7 +216,8 @@ export default function DivisiAcara({ proker }) {
                     key={t.value}
                     type="button"
                     onClick={() => setSelectedType(t.value)}
-                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-xs font-semibold transition-all ${selectedType === t.value ? 'bg-primary-600/10 border-primary-500 text-primary-400' : 'bg-surface-700/30 border-white/5 text-slate-400 hover:bg-surface-700/50'}`}
+                    disabled={!canEdit}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-xs font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${selectedType === t.value ? 'bg-primary-600/10 border-primary-500 text-primary-400' : 'bg-surface-700/30 border-white/5 text-slate-400 hover:bg-surface-700/50'}`}
                   >
                     <span className={`w-3.5 h-3.5 rounded-md ${t.color.split(' ')[0]} border border-white/20`} />
                     {t.label}
@@ -221,12 +234,17 @@ export default function DivisiAcara({ proker }) {
                 onChange={(e) => setItemText(e.target.value)}
                 placeholder="Contoh: Panggung Band"
                 className="input text-xs"
+                disabled={!canEdit}
               />
             </div>
 
             <div className="p-3 bg-surface-700/50 rounded-xl text-[10px] text-slate-400 leading-relaxed">
               <span className="font-bold text-slate-300 block mb-0.5">Petunjuk:</span>
-              Ketik nama barang di atas, pilih jenisnya, lalu **KLIK pada area denah di kanan** untuk memposisikannya secara instan.
+              {canEdit ? (
+                'Ketik nama barang di atas, pilih jenisnya, lalu KLIK pada area denah di kanan untuk memposisikannya secara instan.'
+              ) : (
+                <span className="text-red-400 font-semibold">Anda tidak memiliki hak akses untuk mengedit denah lapangan. (Hanya BPH, PSDM, & Minat Bakat).</span>
+              )}
             </div>
           </div>
 
@@ -243,7 +261,7 @@ export default function DivisiAcara({ proker }) {
             <div
               ref={canvasRef}
               onClick={handleCanvasClick}
-              className="w-full h-[400px] relative bg-surface-950 rounded-3xl overflow-hidden border border-white/5 cursor-crosshair shadow-inner"
+              className={`w-full h-[400px] relative bg-surface-950 rounded-3xl overflow-hidden border border-white/5 shadow-inner ${canEdit ? 'cursor-crosshair' : 'cursor-not-allowed opacity-80'}`}
               style={{
                 backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)',
                 backgroundSize: '20px 20px',
@@ -266,12 +284,13 @@ export default function DivisiAcara({ proker }) {
                       className={`absolute px-3 py-1.5 rounded-lg border text-[10px] font-bold text-white ${colorClass} flex items-center gap-1.5 shadow-lg group cursor-pointer active:scale-95`}
                       onClick={(e) => {
                         e.stopPropagation(); // Stop parent canvas click trigger
+                        if (!canEdit) return;
                         if (window.confirm(`Hapus ${item.text} dari denah?`)) deleteFloorItem(item.id);
                       }}
-                      title="Klik untuk menghapus barang"
+                      title={canEdit ? 'Klik untuk menghapus barang' : ''}
                     >
                       <span>{item.text}</span>
-                      <Trash className="w-3 h-3 text-white/50 group-hover:text-red-300 transition-colors" />
+                      {canEdit && <Trash className="w-3 h-3 text-white/50 group-hover:text-red-300 transition-colors" />}
                     </div>
                   );
                 })

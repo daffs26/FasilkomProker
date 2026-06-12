@@ -13,6 +13,8 @@ export default function DivisiKesehatan({ proker }) {
   const { profile } = useAuth();
   const [subTab, setSubTab] = useState('stock');
 
+  const canEdit = profile.divisi === 'BPH' || profile.divisi === 'ADVOKASI';
+
   // Subcollections
   const { data: medicine, addItem: addMedItem, updateItem: updateMedItem, deleteItem: deleteMedItem } = 
     useProkerSubcollection(proker.id, 'medicine', 'createdAt', 'asc');
@@ -31,6 +33,7 @@ export default function DivisiKesehatan({ proker }) {
   // Submit Medicine
   const handleAddMed = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!medName.trim() || !medStock.trim()) return;
     await addMedItem({
       name: medName.trim(),
@@ -43,7 +46,7 @@ export default function DivisiKesehatan({ proker }) {
 
   // Toggle Medicine Status
   const handleToggleMedStatus = async (item) => {
-    if (profile.divisi !== 'Kesehatan' && profile.divisi !== 'BPH') return;
+    if (!canEdit) return;
     const nextStatus = item.status === 'Tersedia' ? 'Kurang' : 'Tersedia';
     await updateMedItem(item.id, { status: nextStatus });
   };
@@ -51,6 +54,7 @@ export default function DivisiKesehatan({ proker }) {
   // Submit Log
   const handleAddLog = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!patientName.trim() || !patientIssue.trim() || !patientAction.trim()) return;
     
     await addMedicalLog({
@@ -118,8 +122,8 @@ export default function DivisiKesehatan({ proker }) {
                           <button
                             onClick={() => handleToggleMedStatus(item)}
                             className={`badge gap-1 cursor-pointer select-none ${item.status === 'Tersedia' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}
-                            disabled={profile.divisi !== 'Kesehatan' && profile.divisi !== 'BPH'}
-                            title="Klik untuk mengubah status (Koor Kesehatan/BPH)"
+                            disabled={!canEdit}
+                            title="Klik untuk mengubah status (ADVOKASI/BPH)"
                           >
                             {item.status === 'Tersedia' ? (
                               <>
@@ -133,7 +137,7 @@ export default function DivisiKesehatan({ proker }) {
                           </button>
                         </td>
                         <td className="px-4 py-4 text-center">
-                          {profile.divisi === 'Kesehatan' || profile.divisi === 'BPH' ? (
+                          {canEdit ? (
                             <button
                               onClick={() => deleteMedItem(item.id)}
                               className="p-1 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
@@ -164,6 +168,7 @@ export default function DivisiKesehatan({ proker }) {
                     onChange={(e) => setMedName(e.target.value)}
                     placeholder="Contoh: Paracetamol 500mg"
                     className="input text-xs"
+                    disabled={!canEdit}
                     required
                   />
                 </div>
@@ -175,10 +180,15 @@ export default function DivisiKesehatan({ proker }) {
                     onChange={(e) => setMedStock(e.target.value)}
                     placeholder="Contoh: 2 Box / 3 Pcs"
                     className="input text-xs"
+                    disabled={!canEdit}
                     required
                   />
                 </div>
-                <button type="submit" className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2">
+                <button
+                  type="submit"
+                  disabled={!canEdit}
+                  className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <Plus className="w-4 h-4" /> Tambah Obat
                 </button>
               </form>
@@ -236,7 +246,7 @@ export default function DivisiKesehatan({ proker }) {
                         <div><span className="text-slate-500">Keluhan:</span> {log.issue}</div>
                         <div><span className="text-slate-500">Tindakan:</span> {log.action}</div>
                       </div>
-                      {(profile.divisi === 'Kesehatan' || profile.divisi === 'BPH') && (
+                      {canEdit && (
                         <button
                           onClick={() => deleteMedicalLog(log.id)}
                           className="absolute bottom-3 right-3 p-1 text-slate-500 hover:text-red-400 hover:bg-white/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
@@ -264,6 +274,7 @@ export default function DivisiKesehatan({ proker }) {
                   onChange={(e) => setPatientName(e.target.value)}
                   placeholder="Contoh: Rian (Staff Acara)"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -275,6 +286,7 @@ export default function DivisiKesehatan({ proker }) {
                   onChange={(e) => setPatientIssue(e.target.value)}
                   placeholder="Contoh: Sakit kepala / Lemas pingsan"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -285,10 +297,15 @@ export default function DivisiKesehatan({ proker }) {
                   onChange={(e) => setPatientAction(e.target.value)}
                   placeholder="Contoh: Istirahat di UKS & diberi air hangat + Parasetamol"
                   className="input h-20 resize-none text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
-              <button type="submit" className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2">
+              <button
+                type="submit"
+                disabled={!canEdit}
+                className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Plus className="w-4 h-4" /> Simpan Log Medis
               </button>
             </form>

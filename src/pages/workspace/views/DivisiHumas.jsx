@@ -7,6 +7,17 @@ export default function DivisiHumas({ proker }) {
   const { profile } = useAuth();
   const [subTab, setSubTab] = useState('sponsorship');
 
+  const canEdit = profile.divisi === 'BPH' || profile.divisi === 'KOMINFO' || profile.divisi === 'SOSMAS';
+
+  const canToggleObligation = (item) => {
+    if (profile.divisi === 'BPH') return true;
+    if (item.division === 'PDD') return profile.divisi === 'PDD' || profile.divisi === 'KOMINFO';
+    if (item.division === 'Perlengkapan') return profile.divisi === 'MINAT BAKAT';
+    if (item.division === 'Acara') return profile.divisi === 'PSDM' || profile.divisi === 'MINAT BAKAT';
+    if (item.division === 'Humas') return profile.divisi === 'KOMINFO' || profile.divisi === 'SOSMAS';
+    return false;
+  };
+
   // Subcollections
   const { data: sponsorships, addItem: addSponsor, updateItem: updateSponsor, deleteItem: deleteSponsor } = 
     useProkerSubcollection(proker.id, 'sponsorships', 'createdAt', 'asc');
@@ -35,6 +46,7 @@ export default function DivisiHumas({ proker }) {
   // Submit Sponsor
   const handleAddSponsor = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!spName.trim() || !spContact.trim()) return;
     await addSponsor({
       name: spName.trim(),
@@ -50,13 +62,14 @@ export default function DivisiHumas({ proker }) {
 
   // Update Sponsor Status
   const handleUpdateSponsorStatus = async (id, nextStatus) => {
-    if (profile.divisi !== 'Humas' && profile.divisi !== 'BPH') return;
+    if (!canEdit) return;
     await updateSponsor(id, { status: nextStatus });
   };
 
   // Submit Medpart
   const handleAddMedpart = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!mpName.trim() || !mpContact.trim()) return;
     await addMedpart({
       name: mpName.trim(),
@@ -70,6 +83,7 @@ export default function DivisiHumas({ proker }) {
   // Submit Obligation
   const handleAddObligation = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!obSponsor.trim() || !obText.trim()) return;
     await addObligation({
       sponsor: obSponsor.trim(),
@@ -83,8 +97,7 @@ export default function DivisiHumas({ proker }) {
 
   // Toggle Obligation Status
   const handleToggleObligation = async (item) => {
-    // Only target division or BPH can toggle
-    if (profile.divisi !== item.division && profile.divisi !== 'BPH' && profile.divisi !== 'Humas') return;
+    if (!canToggleObligation(item)) return;
     const nextStatus = item.status === 'Done' ? 'Pending' : 'Done';
     await updateObligation(item.id, { status: nextStatus });
   };
@@ -155,7 +168,7 @@ export default function DivisiHumas({ proker }) {
                           <select
                             value={item.status}
                             onChange={(e) => handleUpdateSponsorStatus(item.id, e.target.value)}
-                            disabled={profile.divisi !== 'Humas' && profile.divisi !== 'BPH'}
+                            disabled={!canEdit}
                             className="bg-surface-800 text-xs border border-white/10 text-slate-200 rounded px-2 py-1 focus:outline-none"
                           >
                             <option value="Negosiasi">Negosiasi</option>
@@ -165,7 +178,7 @@ export default function DivisiHumas({ proker }) {
                         </td>
                         <td className="px-4 py-4 text-xs font-medium text-slate-400">{item.contact}</td>
                         <td className="px-4 py-4 text-center">
-                          {profile.divisi === 'Humas' || profile.divisi === 'BPH' ? (
+                          {canEdit ? (
                             <button
                               onClick={() => deleteSponsor(item.id)}
                               className="p-1 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
@@ -194,6 +207,7 @@ export default function DivisiHumas({ proker }) {
                   onChange={(e) => setSpName(e.target.value)}
                   placeholder="Contoh: Telkomsel"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -205,6 +219,7 @@ export default function DivisiHumas({ proker }) {
                   onChange={(e) => setSpContact(e.target.value)}
                   placeholder="Contoh: Pak Budi (0812...)"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -215,6 +230,7 @@ export default function DivisiHumas({ proker }) {
                     value={spPackage}
                     onChange={(e) => setSpPackage(e.target.value)}
                     className="select text-xs"
+                    disabled={!canEdit}
                   >
                     <option value="Silver">Silver</option>
                     <option value="Gold">Gold</option>
@@ -230,10 +246,15 @@ export default function DivisiHumas({ proker }) {
                     onChange={(e) => setSpAmount(e.target.value)}
                     placeholder="Contoh: 1500000"
                     className="input text-xs"
+                    disabled={!canEdit}
                   />
                 </div>
               </div>
-              <button type="submit" className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2">
+              <button
+                type="submit"
+                disabled={!canEdit}
+                className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Plus className="w-4 h-4" /> Masukkan Database
               </button>
             </form>
@@ -256,6 +277,7 @@ export default function DivisiHumas({ proker }) {
                   onChange={(e) => setMpName(e.target.value)}
                   placeholder="Contoh: @infokampus"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -267,6 +289,7 @@ export default function DivisiHumas({ proker }) {
                   onChange={(e) => setMpContact(e.target.value)}
                   placeholder="Contoh: Line/WA/DM"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -276,12 +299,17 @@ export default function DivisiHumas({ proker }) {
                   value={mpStatus}
                   onChange={(e) => setMpStatus(e.target.value)}
                   className="select text-xs"
+                  disabled={!canEdit}
                 >
                   <option value="Negosiasi">Negosiasi</option>
                   <option value="Deal">Deal</option>
                 </select>
               </div>
-              <button type="submit" className="btn-primary w-full py-2.5 flex justify-center text-xs">
+              <button
+                type="submit"
+                disabled={!canEdit}
+                className="btn-primary w-full py-2.5 flex justify-center text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Plus className="w-4 h-4" /> Tambah Medpart
               </button>
             </form>
@@ -307,7 +335,7 @@ export default function DivisiHumas({ proker }) {
                         {mp.status}
                       </span>
                     </div>
-                    {(profile.divisi === 'Humas' || profile.divisi === 'BPH') && (
+                    {canEdit && (
                       <button
                         onClick={() => deleteMedpart(mp.id)}
                         className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
@@ -347,7 +375,7 @@ export default function DivisiHumas({ proker }) {
                       <div className="flex items-start gap-3">
                         <button
                           onClick={() => handleToggleObligation(item)}
-                          disabled={profile.divisi !== item.division && profile.divisi !== 'BPH' && profile.divisi !== 'Humas'}
+                          disabled={!canToggleObligation(item)}
                           className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center border transition-all ${item.status === 'Done' ? 'bg-primary-600 border-primary-500 text-white' : 'border-white/20 hover:border-primary-500'}`}
                         >
                           {item.status === 'Done' && <Check className="w-3.5 h-3.5" />}
@@ -363,7 +391,7 @@ export default function DivisiHumas({ proker }) {
                         </div>
                       </div>
 
-                      {(profile.divisi === 'Humas' || profile.divisi === 'BPH') && (
+                      {canEdit && (
                         <button
                           onClick={() => deleteObligation(item.id)}
                           className="p-1 text-slate-500 hover:text-red-400"
@@ -390,6 +418,7 @@ export default function DivisiHumas({ proker }) {
                   onChange={(e) => setObSponsor(e.target.value)}
                   placeholder="Contoh: Bank Jatim"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -400,6 +429,7 @@ export default function DivisiHumas({ proker }) {
                   onChange={(e) => setObText(e.target.value)}
                   placeholder="Contoh: Cetak logo sponsor di banner panggung & ID Card panitia"
                   className="input h-24 resize-none text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -409,6 +439,7 @@ export default function DivisiHumas({ proker }) {
                   value={obDiv}
                   onChange={(e) => setObDiv(e.target.value)}
                   className="select text-xs"
+                  disabled={!canEdit}
                 >
                   <option value="PDD">PDD (Desain/Banner)</option>
                   <option value="Perlengkapan">Perlengkapan (Stan Booth)</option>
@@ -416,7 +447,11 @@ export default function DivisiHumas({ proker }) {
                   <option value="Humas">Humas (Publikasi Sosmed)</option>
                 </select>
               </div>
-              <button type="submit" className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2">
+              <button
+                type="submit"
+                disabled={!canEdit}
+                className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Plus className="w-4 h-4" /> Simpan Kewajiban
               </button>
             </form>

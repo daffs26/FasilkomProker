@@ -7,6 +7,9 @@ export default function DivisiPDD({ proker }) {
   const { profile } = useAuth();
   const [subTab, setSubTab] = useState('calendar');
 
+  const canEdit = profile.divisi === 'BPH' || profile.divisi === 'PDD' || profile.divisi === 'KOMINFO';
+  const canApprove = profile.divisi === 'BPH' || profile.jabatan === 'Kadep PDD';
+
   // Subcollections
   const { data: calendar, addItem: addCalItem, updateItem: updateCalItem, deleteItem: deleteCalItem } = 
     useProkerSubcollection(proker.id, 'pddCalendar', 'createdAt', 'asc');
@@ -25,6 +28,7 @@ export default function DivisiPDD({ proker }) {
   // Submit Calendar Task
   const handleAddCal = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!calTask.trim() || !calDeadline) return;
     await addCalItem({
       task: calTask.trim(),
@@ -37,7 +41,7 @@ export default function DivisiPDD({ proker }) {
 
   // Toggle Calendar Task Status
   const handleToggleCal = async (item) => {
-    if (profile.divisi !== 'PDD' && profile.divisi !== 'BPH') return;
+    if (!canEdit) return;
     const nextStatus = item.status === 'Done' ? 'Pending' : 'Done';
     await updateCalItem(item.id, { status: nextStatus });
   };
@@ -45,6 +49,7 @@ export default function DivisiPDD({ proker }) {
   // Mock Upload Design Info
   const handleAddDesignMock = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!dTitle.trim() || !dFile.trim()) return;
     await addDesign({
       title: dTitle.trim(),
@@ -59,8 +64,7 @@ export default function DivisiPDD({ proker }) {
 
   // Toggle Design ACC (Approved)
   const handleToggleAcc = async (item) => {
-    // Only BPH or Koor PDD can approve
-    if (profile.divisi !== 'BPH' && profile.jabatan !== 'Koordinator Divisi') return;
+    if (!canApprove) return;
     await updateDesign(item.id, { acc: !item.acc });
   };
 
@@ -106,9 +110,9 @@ export default function DivisiPDD({ proker }) {
                       <div className="flex items-start gap-3">
                         <button
                           onClick={() => handleToggleCal(item)}
-                          disabled={profile.divisi !== 'PDD' && profile.divisi !== 'BPH'}
+                          disabled={!canEdit}
                           className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center border transition-all ${item.status === 'Done' ? 'bg-primary-600 border-primary-500 text-white' : 'border-white/20 hover:border-primary-500'}`}
-                          title="Klik untuk menyelesaikan tugas (Koor PDD/BPH)"
+                          title="Klik untuk menyelesaikan tugas"
                         >
                           {item.status === 'Done' && <Check className="w-3.5 h-3.5" />}
                         </button>
@@ -122,7 +126,7 @@ export default function DivisiPDD({ proker }) {
                         </div>
                       </div>
 
-                      {(profile.divisi === 'PDD' || profile.divisi === 'BPH') && (
+                      {canEdit && (
                         <button
                           onClick={() => deleteCalItem(item.id)}
                           className="p-1 text-slate-500 hover:text-red-400 transition-colors"
@@ -149,6 +153,7 @@ export default function DivisiPDD({ proker }) {
                   onChange={(e) => setCalTask(e.target.value)}
                   placeholder="Contoh: Rilis Pamflet Pendaftaran Acara"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -159,10 +164,15 @@ export default function DivisiPDD({ proker }) {
                   value={calDeadline}
                   onChange={(e) => setCalDeadline(e.target.value)}
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
-              <button type="submit" className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2">
+              <button
+                type="submit"
+                disabled={!canEdit}
+                className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Plus className="w-4 h-4" /> Masukkan Kalender
               </button>
             </form>
@@ -185,6 +195,7 @@ export default function DivisiPDD({ proker }) {
                   onChange={(e) => setDTitle(e.target.value)}
                   placeholder="Contoh: Banner Backdrop Panggung"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -196,6 +207,7 @@ export default function DivisiPDD({ proker }) {
                   onChange={(e) => setDFile(e.target.value)}
                   placeholder="Contoh: backdrop_pemilwa_v2.png"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -205,6 +217,7 @@ export default function DivisiPDD({ proker }) {
                   value={dSize}
                   onChange={(e) => setDSize(e.target.value)}
                   className="select text-xs"
+                  disabled={!canEdit}
                 >
                   <option value="1.2 MB">1.2 MB</option>
                   <option value="2.8 MB">2.8 MB</option>
@@ -212,7 +225,11 @@ export default function DivisiPDD({ proker }) {
                   <option value="8.0 MB">8.0 MB</option>
                 </select>
               </div>
-              <button type="submit" className="btn-primary w-full py-2.5 flex justify-center text-xs">
+              <button
+                type="submit"
+                disabled={!canEdit}
+                className="btn-primary w-full py-2.5 flex justify-center text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Plus className="w-4 h-4" /> Upload Info Desain
               </button>
             </form>
@@ -235,7 +252,7 @@ export default function DivisiPDD({ proker }) {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-bold text-white text-sm">{item.title}</h4>
-                        {(profile.divisi === 'PDD' || profile.divisi === 'BPH') && (
+                        {canEdit && (
                           <button
                             onClick={() => deleteDesign(item.id)}
                             className="p-1 text-slate-500 hover:text-red-400 transition-colors"
@@ -263,9 +280,9 @@ export default function DivisiPDD({ proker }) {
                       
                       <button
                         onClick={() => handleToggleAcc(item)}
-                        disabled={profile.divisi !== 'BPH' && profile.jabatan !== 'Koordinator Divisi'}
-                        className={`btn-secondary text-[10px] py-1.5 px-3 flex items-center gap-1 ${item.acc ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 hover:bg-surface-600 text-slate-300'}`}
-                        title="Hanya BPH atau Koor Divisi yang dapat memberi ACC"
+                        disabled={!canApprove}
+                        className={`btn-secondary text-[10px] py-1.5 px-3 flex items-center gap-1 ${item.acc ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30' : 'bg-surface-700 hover:bg-surface-600 text-slate-300'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        title="Hanya BPH atau Kadep PDD yang dapat memberi ACC"
                       >
                         {item.acc ? (
                           <>

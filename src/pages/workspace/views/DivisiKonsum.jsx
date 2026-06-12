@@ -6,6 +6,8 @@ import { useAuth } from '../../../hooks/useAuth';
 export default function DivisiKonsum({ proker }) {
   const { profile } = useAuth();
 
+  const canEdit = profile.divisi === 'BPH' || profile.divisi === 'SOSMAS';
+
   // Subcollection
   const { data: catering, addItem: addCatering, deleteItem: deleteCatering } = 
     useProkerSubcollection(proker.id, 'catering', 'createdAt', 'asc');
@@ -32,6 +34,7 @@ export default function DivisiKonsum({ proker }) {
   // Add Catering log entry
   const handleAddCatering = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!cVendor.trim() || !cMenu.trim() || !cPrice || !cQty) return;
     await addCatering({
       vendor: cVendor.trim(),
@@ -68,6 +71,7 @@ export default function DivisiKonsum({ proker }) {
                     value={staffCount}
                     onChange={(e) => setStaffCount(e.target.value)}
                     className="input text-xs"
+                    disabled={!canEdit}
                   />
                 </div>
                 <div>
@@ -77,6 +81,7 @@ export default function DivisiKonsum({ proker }) {
                     value={vipCount}
                     onChange={(e) => setVipCount(e.target.value)}
                     className="input text-xs"
+                    disabled={!canEdit}
                   />
                 </div>
               </div>
@@ -89,6 +94,7 @@ export default function DivisiKonsum({ proker }) {
                     value={pricePerBox}
                     onChange={(e) => setPricePerBox(e.target.value)}
                     className="input text-xs"
+                    disabled={!canEdit}
                   />
                 </div>
                 <div>
@@ -98,6 +104,7 @@ export default function DivisiKonsum({ proker }) {
                     value={mealFreq}
                     onChange={(e) => setMealFreq(e.target.value)}
                     className="input text-xs"
+                    disabled={!canEdit}
                   />
                 </div>
               </div>
@@ -162,6 +169,7 @@ export default function DivisiKonsum({ proker }) {
                 onChange={(e) => setCVendor(e.target.value)}
                 placeholder="Contoh: Catering Berkah"
                 className="input text-xs"
+                disabled={!canEdit}
                 required
               />
             </div>
@@ -173,6 +181,7 @@ export default function DivisiKonsum({ proker }) {
                 onChange={(e) => setCMenu(e.target.value)}
                 placeholder="Contoh: Nasi Ayam Bakar + Es Teh"
                 className="input text-xs"
+                disabled={!canEdit}
                 required
               />
             </div>
@@ -185,6 +194,7 @@ export default function DivisiKonsum({ proker }) {
                   onChange={(e) => setCPrice(e.target.value)}
                   placeholder="Contoh: 18000"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -196,6 +206,7 @@ export default function DivisiKonsum({ proker }) {
                   onChange={(e) => setCQty(e.target.value)}
                   placeholder="Contoh: 60"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -206,6 +217,7 @@ export default function DivisiKonsum({ proker }) {
                 value={cType}
                 onChange={(e) => setCType(e.target.value)}
                 className="select text-xs"
+                disabled={!canEdit}
               >
                 <option value="Makan Siang Panitia">Makan Siang Panitia</option>
                 <option value="Makan Malam Panitia">Makan Malam Panitia</option>
@@ -214,7 +226,11 @@ export default function DivisiKonsum({ proker }) {
                 <option value="Snack Tamu VIP">Snack Tamu VIP</option>
               </select>
             </div>
-            <button type="submit" className="btn-primary w-full py-2.5 flex justify-center text-xs">
+            <button
+              type="submit"
+              disabled={!canEdit}
+              className="btn-primary w-full py-2.5 flex justify-center text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Plus className="w-4 h-4" /> Masukkan Data Pemesanan
             </button>
           </form>
@@ -261,7 +277,7 @@ export default function DivisiKonsum({ proker }) {
                       Rp {(item.quantity * item.price).toLocaleString('id-ID')}
                     </td>
                     <td className="px-4 py-4 text-center">
-                      {profile.divisi === 'Konsumsi' || profile.divisi === 'BPH' ? (
+                      {canEdit ? (
                         <button
                           onClick={() => deleteCatering(item.id)}
                           className="p-1 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"

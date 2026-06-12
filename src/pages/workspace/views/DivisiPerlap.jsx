@@ -7,6 +7,8 @@ export default function DivisiPerlap({ proker }) {
   const { profile } = useAuth();
   const [subTab, setSubTab] = useState('inventory');
 
+  const canEdit = profile.divisi === 'BPH' || profile.divisi === 'MINAT BAKAT';
+
   // Subcollections
   const { data: inventory, addItem: addInvItem, updateItem: updateInvItem, deleteItem: deleteInvItem } = 
     useProkerSubcollection(proker.id, 'inventory', 'createdAt', 'asc');
@@ -28,6 +30,7 @@ export default function DivisiPerlap({ proker }) {
   // Add Inventory Item
   const handleAddInv = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!invItem.trim() || !invQty || !invPic.trim()) return;
     await addInvItem({
       item: invItem.trim(),
@@ -43,7 +46,7 @@ export default function DivisiPerlap({ proker }) {
 
   // Toggle Inventory Status
   const handleToggleInvStatus = async (item) => {
-    if (profile.divisi !== 'Perlengkapan' && profile.divisi !== 'BPH') return;
+    if (!canEdit) return;
     const nextStatus = item.status === 'Sudah Ada' ? 'Belum Ada' : 'Sudah Ada';
     await updateInvItem(item.id, { status: nextStatus });
   };
@@ -51,6 +54,7 @@ export default function DivisiPerlap({ proker }) {
   // Add Vendor
   const handleAddVendor = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!vName.trim() || !vService.trim() || !vContact.trim()) return;
     await addVendor({
       name: vName.trim(),
@@ -120,7 +124,7 @@ export default function DivisiPerlap({ proker }) {
                           <button
                             onClick={() => handleToggleInvStatus(item)}
                             className={`badge gap-1 cursor-pointer select-none ${item.status === 'Sudah Ada' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}
-                            disabled={profile.divisi !== 'Perlengkapan' && profile.divisi !== 'BPH'}
+                            disabled={!canEdit}
                             title="Klik untuk mengubah status (Koor Perlap/BPH)"
                           >
                             {item.status === 'Sudah Ada' ? (
@@ -135,7 +139,7 @@ export default function DivisiPerlap({ proker }) {
                           </button>
                         </td>
                         <td className="px-4 py-4 text-center">
-                          {profile.divisi === 'Perlengkapan' || profile.divisi === 'BPH' ? (
+                          {canEdit ? (
                             <button
                               onClick={() => deleteInvItem(item.id)}
                               className="p-1 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
@@ -164,6 +168,7 @@ export default function DivisiPerlap({ proker }) {
                   onChange={(e) => setInvItem(e.target.value)}
                   placeholder="Contoh: Kabel Roll 10m"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -176,6 +181,7 @@ export default function DivisiPerlap({ proker }) {
                     onChange={(e) => setInvQty(e.target.value)}
                     placeholder="Contoh: 4"
                     className="input text-xs"
+                    disabled={!canEdit}
                     required
                   />
                 </div>
@@ -185,6 +191,7 @@ export default function DivisiPerlap({ proker }) {
                     value={invSource}
                     onChange={(e) => setInvSource(e.target.value)}
                     className="select text-xs"
+                    disabled={!canEdit}
                   >
                     <option value="Pinjam BEM">Pinjam BEM</option>
                     <option value="Pinjam Fakultas">Pinjam Fakultas</option>
@@ -201,10 +208,15 @@ export default function DivisiPerlap({ proker }) {
                   onChange={(e) => setInvPic(e.target.value)}
                   placeholder="Contoh: Bagas Aditya"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
-              <button type="submit" className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2">
+              <button
+                type="submit"
+                disabled={!canEdit}
+                className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Plus className="w-4 h-4" /> Masukkan Daftar Alat
               </button>
             </form>
@@ -227,6 +239,7 @@ export default function DivisiPerlap({ proker }) {
                   onChange={(e) => setVName(e.target.value)}
                   placeholder="Contoh: SewaHT Malang"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -238,6 +251,7 @@ export default function DivisiPerlap({ proker }) {
                   onChange={(e) => setVService(e.target.value)}
                   placeholder="Contoh: Katering / Sound System"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -249,6 +263,7 @@ export default function DivisiPerlap({ proker }) {
                   onChange={(e) => setVContact(e.target.value)}
                   placeholder="Contoh: 08123456789"
                   className="input text-xs"
+                  disabled={!canEdit}
                   required
                 />
               </div>
@@ -258,13 +273,18 @@ export default function DivisiPerlap({ proker }) {
                   value={vRating}
                   onChange={(e) => setVRating(e.target.value)}
                   className="select text-xs"
+                  disabled={!canEdit}
                 >
                   <option value="5">⭐⭐⭐⭐⭐ (Sangat Bagus)</option>
                   <option value="4">⭐⭐⭐⭐ (Bagus)</option>
                   <option value="3">⭐⭐⭐ (Cukup)</option>
                 </select>
               </div>
-              <button type="submit" className="btn-primary w-full py-2.5 flex justify-center text-xs">
+              <button
+                type="submit"
+                disabled={!canEdit}
+                className="btn-primary w-full py-2.5 flex justify-center text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Plus className="w-4 h-4" /> Simpan Vendor
               </button>
             </form>
@@ -287,7 +307,7 @@ export default function DivisiPerlap({ proker }) {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-bold text-white text-base">{v.name}</h4>
-                        {profile.divisi === 'Perlengkapan' || profile.divisi === 'BPH' ? (
+                        {canEdit ? (
                           <button
                             onClick={() => deleteVendor(v.id)}
                             className="p-1 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg"

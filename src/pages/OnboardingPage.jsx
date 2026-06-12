@@ -4,25 +4,36 @@ import { useAuth } from '../hooks/useAuth';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
-const JABATAN_OPTIONS = [
-  'Ketua Pelaksana',
-  'Wakil Ketua Pelaksana',
-  'Sekretaris',
-  'Bendahara',
-  'Koordinator Lapangan (Korlap)',
-  'Koordinator Divisi',
-  'Anggota Divisi',
-];
-
-const DIVISI_OPTIONS = [
-  'BPH (Pengurus Harian)',
-  'Acara',
-  'Perlengkapan',
-  'Humas',
-  'PDD (Publikasi, Dekorasi, Dokumentasi)',
-  'Konsumsi',
-  'Kesehatan',
-];
+const BEM_DEPARTMENTS = {
+  'BPH': {
+    label: 'BPH (Pengurus Harian)',
+    positions: ['Ketua BEM', 'Wakil Ketua BEM', 'Sekretaris 1', 'Sekretaris 2', 'Bendahara 1', 'Bendahara 2']
+  },
+  'PSDM': {
+    label: 'PSDM (Pengembangan Sumber Daya Mahasiswa)',
+    positions: ['Kadep PSDM', 'Kadiv PSDM Pengembangan', 'Kadiv PSDM Ristek', 'Anggota PSDM Pengembangan', 'Anggota PSDM Ristek']
+  },
+  'KOMINFO': {
+    label: 'KOMINFO (Komunikasi & Informasi)',
+    positions: ['Kadep Kominfo', 'Anggota Kominfo']
+  },
+  'PDD': {
+    label: 'PDD (Publikasi, Dekorasi, Dokumentasi)',
+    positions: ['Kadep PDD', 'Anggota PDD']
+  },
+  'ADVOKASI': {
+    label: 'ADVOKASI (Advokasi & Kesejahteraan)',
+    positions: ['Kadep Advokasi', 'Anggota Advokasi']
+  },
+  'MINAT BAKAT': {
+    label: 'MINAT BAKAT (Minat & Bakat)',
+    positions: ['Kadep Minat Bakat', 'Anggota Minat Bakat']
+  },
+  'SOSMAS': {
+    label: 'SOSMAS (Sosial Masyarakat)',
+    positions: ['Kadep Sosmas', 'Anggota Sosmas']
+  }
+};
 
 export default function OnboardingPage() {
   const { user, profile } = useAuth();
@@ -39,11 +50,16 @@ export default function OnboardingPage() {
     return null;
   }
 
+  const handleDivisiChange = (e) => {
+    setDivisi(e.target.value);
+    setJabatan('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) return setError('Nama lengkap harus diisi.');
-    if (!jabatan) return setError('Pilih jabatan Anda.');
     if (!divisi) return setError('Pilih divisi Anda.');
+    if (!jabatan) return setError('Pilih jabatan Anda.');
 
     setSubmitting(true);
     setError('');
@@ -52,7 +68,7 @@ export default function OnboardingPage() {
       await setDoc(doc(db, 'users', user.uid), {
         name: name.trim(),
         jabatan,
-        divisi: divisi.split(' ')[0], // Simpan key divisinya saja (BPH, Acara, dll)
+        divisi,
         email: user.email,
         photoURL: user.photoURL || '',
         createdAt: new Date().toISOString(),
@@ -110,18 +126,18 @@ export default function OnboardingPage() {
 
             <div>
               <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">
-                Jabatan / Peran
+                Divisi / Departemen BEM
               </label>
               <select
-                value={jabatan}
-                onChange={(e) => setJabatan(e.target.value)}
+                value={divisi}
+                onChange={handleDivisiChange}
                 className="select"
                 required
               >
-                <option value="" disabled>Pilih Jabatan</option>
-                {JABATAN_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt} className="bg-surface-800 text-slate-100">
-                    {opt}
+                <option value="" disabled>Pilih Divisi</option>
+                {Object.entries(BEM_DEPARTMENTS).map(([key, data]) => (
+                  <option key={key} value={key} className="bg-surface-800 text-slate-100">
+                    {data.label}
                   </option>
                 ))}
               </select>
@@ -129,16 +145,17 @@ export default function OnboardingPage() {
 
             <div>
               <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">
-                Divisi
+                Jabatan / Peran BEM
               </label>
               <select
-                value={divisi}
-                onChange={(e) => setDivisi(e.target.value)}
+                value={jabatan}
+                onChange={(e) => setJabatan(e.target.value)}
                 className="select"
+                disabled={!divisi}
                 required
               >
-                <option value="" disabled>Pilih Divisi</option>
-                {DIVISI_OPTIONS.map((opt) => (
+                <option value="" disabled>Pilih Jabatan</option>
+                {divisi && BEM_DEPARTMENTS[divisi]?.positions.map((opt) => (
                   <option key={opt} value={opt} className="bg-surface-800 text-slate-100">
                     {opt}
                   </option>
