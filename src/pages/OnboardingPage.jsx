@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import LogoBEM from '../assets/logo-bem.png';
 import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -105,10 +106,8 @@ export default function OnboardingPage() {
 
       <div className="w-full max-w-md animate-slide-up">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-700 shadow-2xl shadow-primary-900/50 mb-4">
-            <span className="text-white font-bold text-2xl">FP</span>
-          </div>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <img src={LogoBEM} alt="BEM Fasilkom UMB" className="w-20 h-20 object-cover rounded-full border-2 border-white/10 mb-4" />
           <h1 className="text-2xl font-bold text-white tracking-tight">Lengkapi Profil Anda</h1>
           <p className="text-slate-400 mt-2 text-sm leading-relaxed">
             Sebelum masuk ke workspace BEM FASILKOM UMB, silakan tentukan peran Anda dalam kepanitiaan.

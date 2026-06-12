@@ -3,8 +3,7 @@ import { useProkerSubcollection } from '../../../hooks/useProker';
 import { FileSpreadsheet, Plus, Trash, Printer, AlertTriangle, FileText } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 
-export default function LPJ({ proker }) {
-  const { profile } = useAuth();
+export default function LPJ({ proker, profile }) {
   const [subTab, setSubTab] = useState('evaluations');
 
   // Subcollections
@@ -16,7 +15,7 @@ export default function LPJ({ proker }) {
 
   // Evaluation Form
   const [evalNote, setEvalNote] = useState('');
-  const [evalDiv, setEvalDiv] = useState(profile.divisi || 'Acara');
+  const [evalDiv, setEvalDiv] = useState(profile?.divisi || 'Acara');
 
   // Submit Evaluation Note
   const handleAddEval = async (e) => {

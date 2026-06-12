@@ -3,10 +3,8 @@ import { useProkerSubcollection } from '../../../hooks/useProker';
 import { Coffee, Calculator, Plus, Trash, ShieldAlert, BadgeInfo } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 
-export default function DivisiKonsum({ proker }) {
-  const { profile } = useAuth();
-
-  const canEdit = profile.divisi === 'BPH' || profile.divisi === 'SOSMAS';
+export default function DivisiKonsum({ proker, profile }) {
+  const canEdit = profile?.divisi === 'BPH' || profile?.divisi === 'SOSMAS';
 
   // Subcollection
   const { data: catering, addItem: addCatering, deleteItem: deleteCatering } = 

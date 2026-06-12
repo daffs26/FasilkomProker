@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import OnboardingPage from './pages/OnboardingPage';
 import HomePage from './pages/HomePage';
 import WorkspaceLayout from './pages/workspace/WorkspaceLayout';
+import LogoBEM from './assets/logo-bem.png';
 
 import { ShieldAlert, Smartphone, LogOut } from 'lucide-react';
 
@@ -75,9 +76,7 @@ function LoadingScreen() {
   return (
     <div className="min-h-screen bg-surface-900 flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-primary-600 flex items-center justify-center animate-pulse">
-          <span className="text-white font-bold text-lg">FP</span>
-        </div>
+        <img src={LogoBEM} alt="BEM Fasilkom UMB" className="w-16 h-16 object-cover rounded-full border-2 border-white/10 animate-pulse" />
         <p className="text-slate-400 text-sm">Memuat Fasilkom Proker...</p>
       </div>
     </div>

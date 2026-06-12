@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProker } from '../../hooks/useProker';
 import { useAuth } from '../../hooks/useAuth';
 import { signOut } from 'firebase/auth';
-import { auth } from '../../firebase/config';
+import { auth, db } from '../../firebase/config';
+import { collection, onSnapshot } from 'firebase/firestore';
 
 // Icons
 import {
   Home, LogOut, LayoutDashboard, Lightbulb, FileText, Users,
-  CalendarDays, Package, Share2, Image, Coffee, Heart, Flame, ShieldAlert, FileSpreadsheet, Menu, X
+  CalendarDays, Package, Share2, Image, Coffee, Heart, Flame, ShieldAlert, FileSpreadsheet, Menu, X, Sun, Moon
 } from 'lucide-react';
+import LogoBEM from '../../assets/logo-bem.png';
 
 // Views
 import Overview from './views/Overview';
@@ -24,6 +26,9 @@ import DivisiKonsum from './views/DivisiKonsum';
 import DivisiKesehatan from './views/DivisiKesehatan';
 import DDay from './views/DDay';
 import LPJ from './views/LPJ';
+import DokumenProker from './views/DokumenProker';
+import Panitia from './views/Panitia';
+import LayoutWorkspace from './views/LayoutWorkspace';
 
 export default function WorkspaceLayout() {
   const { id } = useParams();
@@ -34,13 +39,59 @@ export default function WorkspaceLayout() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Theme states
+  const [theme, setTheme] = useState(localStorage.getItem('FasilkomProker-theme') || 'dark');
+  const [currentUserUids, setCurrentUserUids] = useState(user?.uid ? [user.uid] : []);
+
+  useEffect(() => {
+    if (user?.uid) {
+      setCurrentUserUids(prev => prev.includes(user.uid) ? prev : [...prev, user.uid]);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!profile?.name || !user?.uid) return;
+    const colRef = collection(db, 'users');
+    const unsubscribe = onSnapshot(colRef, (snapshot) => {
+      const uids = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (
+          data.name?.toLowerCase().trim() === profile.name?.toLowerCase().trim() &&
+          data.jabatan?.toLowerCase().trim() === profile.jabatan?.toLowerCase().trim()
+        ) {
+          uids.push(docSnap.id);
+        }
+      });
+      if (!uids.includes(user.uid)) {
+        uids.push(user.uid);
+      }
+      setCurrentUserUids(uids);
+    }, (err) => {
+      console.error("Gagal memuat UIDs user:", err);
+    });
+    return () => unsubscribe();
+  }, [profile, user]);
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('FasilkomProker-theme', nextTheme);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-surface-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-primary-600 flex items-center justify-center animate-pulse">
-            <span className="text-white font-bold text-lg">FP</span>
-          </div>
+          <img src={LogoBEM} alt="BEM Fasilkom UMB" className="w-16 h-16 object-cover rounded-full border-2 border-white/10 animate-pulse" />
           <p className="text-slate-400 text-sm">Memuat Workspace Kepanitiaan...</p>
         </div>
       </div>
@@ -66,6 +117,30 @@ export default function WorkspaceLayout() {
     );
   }
 
+  const isBPH = profile?.divisi === 'BPH';
+  const isKetuaPelaksana = currentUserUids.includes(proker.ketuaPelaksanaId);
+  const isMember = proker.members && proker.members.some(uid => currentUserUids.includes(uid));
+  const hasAccess = isBPH || isKetuaPelaksana || isMember;
+
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-surface-900 flex items-center justify-center p-4">
+        <div className="card max-w-md p-8 text-center space-y-4 bg-surface-800 border-white/10 shadow-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-bold text-white">Akses Ditolak</h2>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Anda tidak terdaftar sebagai panitia dalam program kerja ini. Hanya BPH, Ketua Pelaksana, dan Anggota Panitia yang dapat mengakses workspace ini.
+          </p>
+          <button onClick={() => navigate('/')} className="btn-primary w-full justify-center">
+            <Home className="w-4 h-4" /> Kembali Ke Beranda
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -79,6 +154,9 @@ export default function WorkspaceLayout() {
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'brainstorming', label: 'Brainstorming', icon: Lightbulb },
     { id: 'notulensi', label: 'Notulensi Rapat', icon: FileText },
+    { id: 'dokumen', label: 'Dokumen Proker', icon: FileText },
+    { id: 'layout', label: 'Layout Floor Plan', icon: Map },
+    { id: 'panitia', label: 'Panitia & Anggota', icon: Users },
     { id: 'bph', label: 'BPH & RAB', icon: Users, division: 'BPH' },
     { id: 'acara', label: 'Divisi Acara', icon: CalendarDays, division: 'Acara' },
     { id: 'perlap', label: 'Divisi Perlengkapan', icon: Package, division: 'Perlengkapan' },
@@ -92,19 +170,22 @@ export default function WorkspaceLayout() {
 
   const renderActiveView = () => {
     switch (activeTab) {
-      case 'overview': return <Overview proker={proker} updateProkerDetails={updateProkerDetails} />;
-      case 'brainstorming': return <Brainstorming proker={proker} />;
-      case 'notulensi': return <Notulensi proker={proker} />;
-      case 'bph': return <BPH proker={proker} updateProkerDetails={updateProkerDetails} />;
-      case 'acara': return <DivisiAcara proker={proker} />;
-      case 'perlap': return <DivisiPerlap proker={proker} />;
-      case 'humas': return <DivisiHumas proker={proker} />;
-      case 'pdd': return <DivisiPDD proker={proker} />;
-      case 'konsum': return <DivisiKonsum proker={proker} />;
-      case 'kesehatan': return <DivisiKesehatan proker={proker} />;
-      case 'dday': return <DDay proker={proker} updateProkerDetails={updateProkerDetails} />;
-      case 'lpj': return <LPJ proker={proker} />;
-      default: return <Overview proker={proker} updateProkerDetails={updateProkerDetails} />;
+      case 'overview': return <Overview proker={proker} profile={profile} updateProkerDetails={updateProkerDetails} />;
+      case 'brainstorming': return <Brainstorming proker={proker} profile={profile} />;
+      case 'notulensi': return <Notulensi proker={proker} profile={profile} />;
+      case 'bph': return <BPH proker={proker} profile={profile} updateProkerDetails={updateProkerDetails} />;
+      case 'acara': return <DivisiAcara proker={proker} profile={profile} />;
+      case 'perlap': return <DivisiPerlap proker={proker} profile={profile} />;
+      case 'humas': return <DivisiHumas proker={proker} profile={profile} />;
+      case 'pdd': return <DivisiPDD proker={proker} profile={profile} />;
+      case 'konsum': return <DivisiKonsum proker={proker} profile={profile} />;
+      case 'kesehatan': return <DivisiKesehatan proker={proker} profile={profile} />;
+      case 'dday': return <DDay proker={proker} profile={profile} updateProkerDetails={updateProkerDetails} />;
+      case 'lpj': return <LPJ proker={proker} profile={profile} />;
+      case 'dokumen': return <DokumenProker proker={proker} profile={profile} user={user} />;
+      case 'layout': return <LayoutWorkspace proker={proker} profile={profile} />;
+      case 'panitia': return <Panitia proker={proker} currentProfile={profile} updateProkerDetails={updateProkerDetails} />;
+      default: return <Overview proker={proker} profile={profile} updateProkerDetails={updateProkerDetails} />;
     }
   };
 
@@ -129,11 +210,9 @@ export default function WorkspaceLayout() {
             {/* Header / Brand in Sidebar */}
             <div className="flex items-center justify-between pb-6 border-b border-white/5 mb-6">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">FP</span>
-                </div>
+                <img src={LogoBEM} alt="BEM Fasilkom UMB" className="w-9 h-9 object-cover rounded-full border border-white/10" />
                 <div>
-                  <h2 className="text-sm font-bold leading-none text-white">ProkerKU Workspace</h2>
+                  <h2 className="text-sm font-bold leading-none text-white">FasilkomProker Workspace</h2>
                   <span className="text-[10px] text-slate-400 mt-1 block">BEM FASILKOM UMB</span>
                 </div>
               </div>
@@ -223,6 +302,14 @@ export default function WorkspaceLayout() {
             </div>
 
             <div className="flex items-center gap-3">
+              <button
+                onClick={toggleTheme}
+                className="p-2 bg-surface-800 hover:bg-surface-700 text-slate-400 hover:text-primary-400 rounded-xl border border-white/5 transition-all duration-200"
+                title={theme === 'dark' ? "Mode Terang" : "Mode Gelap"}
+              >
+                {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+              </button>
+
               {profile?.photoURL ? (
                 <img src={profile.photoURL} alt={profile.name} className="w-8 h-8 rounded-full ring-2 ring-primary-500/30" />
               ) : (

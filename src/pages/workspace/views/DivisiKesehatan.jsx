@@ -9,11 +9,10 @@ const EMERGENCY_CONTACTS = [
   { name: 'Keamanan Kampus UMB (Meruya)', phone: '(021) 5840816', note: 'Pos Satpam gerbang utama' },
 ];
 
-export default function DivisiKesehatan({ proker }) {
-  const { profile } = useAuth();
+export default function DivisiKesehatan({ proker, profile }) {
   const [subTab, setSubTab] = useState('stock');
 
-  const canEdit = profile.divisi === 'BPH' || profile.divisi === 'ADVOKASI';
+  const canEdit = profile?.divisi === 'BPH' || profile?.divisi === 'ADVOKASI';
 
   // Subcollections
   const { data: medicine, addItem: addMedItem, updateItem: updateMedItem, deleteItem: deleteMedItem } = 

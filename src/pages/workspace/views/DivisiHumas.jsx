@@ -3,18 +3,17 @@ import { useProkerSubcollection } from '../../../hooks/useProker';
 import { Share2, DollarSign, Plus, Trash, Check, MessageSquare, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 
-export default function DivisiHumas({ proker }) {
-  const { profile } = useAuth();
+export default function DivisiHumas({ proker, profile }) {
   const [subTab, setSubTab] = useState('sponsorship');
 
-  const canEdit = profile.divisi === 'BPH' || profile.divisi === 'KOMINFO' || profile.divisi === 'SOSMAS';
+  const canEdit = profile?.divisi === 'BPH' || profile?.divisi === 'KOMINFO' || profile?.divisi === 'SOSMAS';
 
   const canToggleObligation = (item) => {
-    if (profile.divisi === 'BPH') return true;
-    if (item.division === 'PDD') return profile.divisi === 'PDD' || profile.divisi === 'KOMINFO';
-    if (item.division === 'Perlengkapan') return profile.divisi === 'MINAT BAKAT';
-    if (item.division === 'Acara') return profile.divisi === 'PSDM' || profile.divisi === 'MINAT BAKAT';
-    if (item.division === 'Humas') return profile.divisi === 'KOMINFO' || profile.divisi === 'SOSMAS';
+    if (profile?.divisi === 'BPH') return true;
+    if (item.division === 'PDD') return profile?.divisi === 'PDD' || profile?.divisi === 'KOMINFO';
+    if (item.division === 'Perlengkapan') return profile?.divisi === 'MINAT BAKAT';
+    if (item.division === 'Acara') return profile?.divisi === 'PSDM' || profile?.divisi === 'MINAT BAKAT';
+    if (item.division === 'Humas') return profile?.divisi === 'KOMINFO' || profile?.divisi === 'SOSMAS';
     return false;
   };
 

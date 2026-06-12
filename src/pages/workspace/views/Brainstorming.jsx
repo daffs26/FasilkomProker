@@ -10,13 +10,14 @@ const COLOR_OPTIONS = [
   { value: '#fbcfe8', name: 'Merah Muda', text: 'text-pink-800 bg-pink-100 hover:bg-pink-200' },
 ];
 
-export default function Brainstorming({ proker }) {
-  const { profile } = useAuth();
+export default function Brainstorming({ proker, profile }) {
   const { data: notes, addItem: addNote, deleteItem: deleteNote } = 
     useProkerSubcollection(proker.id, 'brainstorming', 'createdAt', 'desc');
 
   const [text, setText] = useState('');
   const [selectedColor, setSelectedColor] = useState('#fef08a');
+
+  if (!profile) return null;
 
   const handleAddNote = async (e) => {
     e.preventDefault();

@@ -4,6 +4,75 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --primary-50: 240, 249, 255;
+  --primary-100: 224, 242, 254;
+  --primary-200: 186, 230, 253;
+  --primary-300: 125, 211, 252;
+  --primary-400: 56, 189, 248; /* Light blue accent */
+  --primary-500: 14, 165, 233;
+  --primary-600: 2, 132, 199;
+  --primary-700: 3, 105, 161;
+  --primary-800: 7, 89, 133;
+  --primary-900: 12, 74, 110;
+
+  --surface-900: 15, 15, 26;
+  --surface-800: 22, 22, 42;
+  --surface-700: 30, 30, 53;
+  --surface-600: 37, 37, 64;
+  --surface-500: 46, 46, 80;
+
+  --slate-50: 248, 250, 252;
+  --slate-100: 241, 245, 249;
+  --slate-200: 226, 232, 240;
+  --slate-300: 203, 213, 225;
+  --slate-400: 148, 163, 184;
+  --slate-500: 100, 116, 139;
+  --slate-600: 71, 85, 105;
+  --slate-700: 51, 65, 85;
+  --slate-800: 30, 41, 59;
+  --slate-900: 15, 23, 42;
+
+  --white-color: 255, 255, 255;
+}
+
+html.light {
+  --primary-50: 240, 247, 255;
+  --primary-100: 224, 242, 254;
+  --primary-200: 186, 230, 253;
+  --primary-300: 125, 211, 252;
+  --primary-400: 30, 136, 229;  /* Material Blue 600 (#1e88e5) */
+  --primary-500: 33, 150, 243;  /* Material Blue 500 (#2196f3) */
+  --primary-600: 30, 136, 229;  /* Material Blue 600 (#1e88e5) for primary buttons */
+  --primary-700: 21, 101, 192;  /* Material Blue 800 (#1565c0) */
+  --primary-800: 13, 71, 161;   /* Material Blue 900 (#0d47a1) */
+  --primary-900: 10, 58, 133;
+
+  /* Premium Soft Sky-Blue as Major Surface area (matching BEM light style) */
+  --surface-900: 180, 218, 254; 
+  /* Crisp White as Minor Surface areas (Cards, Sidebar, Modals) */
+  --surface-800: 255, 255, 255; 
+  /* Light blue tinted fields & inputs */
+  --surface-700: 240, 247, 255; 
+  /* Light blue tinted active states & secondary buttons */
+  --surface-600: 220, 235, 255; 
+  --surface-500: 186, 220, 255;
+
+  /* Dark Navy Slate for high-end corporate text contrast */
+  --slate-50: 15, 32, 67;
+  --slate-100: 15, 32, 67;
+  --slate-200: 30, 48, 85;
+  --slate-300: 51, 71, 110;
+  --slate-400: 85, 106, 146;
+  --slate-500: 115, 137, 174;
+  --slate-600: 165, 186, 218;
+  --slate-700: 205, 222, 246;
+  --slate-800: 224, 238, 254;
+  --slate-900: 240, 247, 255;
+
+  --white-color: 15, 32, 67;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -30,12 +99,17 @@
 @layer components {
   .btn-primary {
     @apply inline-flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-lg shadow-primary-900/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    color: #ffffff !important;
   }
   .btn-secondary {
     @apply inline-flex items-center gap-2 px-4 py-2.5 bg-surface-600 hover:bg-surface-500 text-slate-200 text-sm font-medium rounded-xl transition-all duration-200 border border-white/5 active:scale-95;
   }
   .btn-danger {
     @apply inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-xl transition-all duration-200 active:scale-95;
+    color: #ffffff !important;
+  }
+  #btn-google-signin {
+    color: #1e293b !important;
   }
   .card {
     @apply bg-surface-800 rounded-2xl border border-white/5 shadow-xl;
@@ -58,4 +132,82 @@
   .glass {
     @apply bg-white/5 backdrop-blur-md border border-white/10;
   }
+}
+
+/* Light Mode Overrides for Crisp Contrast & Accessibility */
+html.light {
+  color: rgb(15, 32, 67);
+}
+
+html.light .text-white {
+  color: rgb(15, 32, 67) !important;
+}
+
+html.light .border-white\/5 {
+  border-color: rgba(30, 136, 229, 0.12) !important;
+}
+
+html.light .border-white\/10 {
+  border-color: rgba(30, 136, 229, 0.2) !important;
+}
+
+/* Ensure buttons, badges, and alerts keep their white text color */
+html.light .btn-primary,
+html.light .btn-primary *,
+html.light .btn-danger,
+html.light .btn-danger *,
+html.light .badge,
+html.light .badge *,
+html.light #btn-confirm-create-proker,
+html.light #btn-confirm-create-proker * {
+  color: #ffffff !important;
+}
+
+/* Form Fields overrides in Light Mode */
+html.light .input,
+html.light .select {
+  background-color: rgb(240, 247, 255) !important;
+  border-color: rgba(30, 136, 229, 0.22) !important;
+  color: rgb(15, 32, 67) !important;
+}
+
+html.light .input::placeholder {
+  color: rgb(115, 137, 174) !important;
+}
+
+/* Modals overlays in Light Mode */
+html.light .fixed.inset-0.bg-surface-900\/80 {
+  background-color: rgba(15, 32, 67, 0.45) !important;
+}
+
+/* Premium drop shadow and border for cards in Light Mode */
+html.light .card {
+  background-color: rgb(255, 255, 255) !important;
+  border-color: rgba(30, 136, 229, 0.12) !important;
+  box-shadow: 0 10px 25px -5px rgba(30, 136, 229, 0.04), 0 8px 10px -6px rgba(30, 136, 229, 0.04) !important;
+}
+
+/* High Contrast Status Badges for Light Mode */
+html.light .bg-yellow-500\/10 {
+  background-color: rgba(234, 179, 8, 0.15) !important;
+  color: rgb(161, 98, 7) !important;
+  border-color: rgba(234, 179, 8, 0.25) !important;
+}
+
+html.light .bg-emerald-500\/10 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  color: rgb(4, 120, 87) !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+html.light .bg-blue-500\/10 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  color: rgb(29, 78, 216) !important;
+  border-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+html.light .bg-purple-500\/10 {
+  background-color: rgba(168, 85, 247, 0.15) !important;
+  color: rgb(126, 34, 206) !important;
+  border-color: rgba(168, 85, 247, 0.25) !important;
 }

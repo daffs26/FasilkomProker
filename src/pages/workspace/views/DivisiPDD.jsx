@@ -3,12 +3,11 @@ import { useProkerSubcollection } from '../../../hooks/useProker';
 import { Image, Check, Clock, Plus, Trash, Eye, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 
-export default function DivisiPDD({ proker }) {
-  const { profile } = useAuth();
+export default function DivisiPDD({ proker, profile }) {
   const [subTab, setSubTab] = useState('calendar');
 
-  const canEdit = profile.divisi === 'BPH' || profile.divisi === 'PDD' || profile.divisi === 'KOMINFO';
-  const canApprove = profile.divisi === 'BPH' || profile.jabatan === 'Kadep PDD';
+  const canEdit = profile?.divisi === 'BPH' || profile?.divisi === 'PDD' || profile?.divisi === 'KOMINFO';
+  const canApprove = profile?.divisi === 'BPH' || profile?.jabatan === 'Kadep PDD';
 
   // Subcollections
   const { data: calendar, addItem: addCalItem, updateItem: updateCalItem, deleteItem: deleteCalItem } = 

@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useProkerSubcollection } from '../../../hooks/useProker';
-import { Package, Star, Plus, Trash, CheckCircle2, XCircle, Phone } from 'lucide-react';
+import { Package, Star, Plus, Trash, CheckCircle2, XCircle, Phone, FileText } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../../firebase/config';
 
-export default function DivisiPerlap({ proker }) {
-  const { profile } = useAuth();
+export default function DivisiPerlap({ proker, profile }) {
   const [subTab, setSubTab] = useState('inventory');
 
-  const canEdit = profile.divisi === 'BPH' || profile.divisi === 'MINAT BAKAT';
+  const canEdit = profile?.divisi === 'BPH' || profile?.divisi === 'MINAT BAKAT';
 
   // Subcollections
   const { data: inventory, addItem: addInvItem, updateItem: updateInvItem, deleteItem: deleteInvItem } = 
@@ -18,8 +19,10 @@ export default function DivisiPerlap({ proker }) {
   // Inventory Form
   const [invItem, setInvItem] = useState('');
   const [invQty, setInvQty] = useState('');
-  const [invSource, setInvSource] = useState('Pinjam BEM');
+  const [invSource, setInvSource] = useState('peminjaman BSP');
   const [invPic, setInvPic] = useState('');
+  const [proofFile, setProofFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   // Vendor Form
   const [vName, setVName] = useState('');
@@ -32,16 +35,43 @@ export default function DivisiPerlap({ proker }) {
     e.preventDefault();
     if (!canEdit) return;
     if (!invItem.trim() || !invQty || !invPic.trim()) return;
+
+    let docUrl = '';
+    let docName = '';
+
+    if (invSource === 'sewa' || invSource === 'beli baru') {
+      if (!proofFile) {
+        alert('Mohon pilih file bukti dokumen.');
+        return;
+      }
+      setUploading(true);
+      try {
+        const storageRef = ref(storage, `proker_documents/${proker.id}/perlap/${Date.now()}_${proofFile.name}`);
+        const uploadResult = await uploadBytes(storageRef, proofFile);
+        docUrl = await getDownloadURL(uploadResult.ref);
+        docName = proofFile.name;
+      } catch (err) {
+        console.error(err);
+        alert('Gagal mengunggah file bukti dokumen.');
+        setUploading(false);
+        return;
+      }
+    }
+
     await addInvItem({
       item: invItem.trim(),
       quantity: parseInt(invQty) || 1,
       source: invSource,
       status: 'Belum Ada',
       pic: invPic.trim(),
+      docUrl: docUrl || null,
+      docName: docName || null,
     });
     setInvItem('');
     setInvQty('');
     setInvPic('');
+    setProofFile(null);
+    setUploading(false);
   };
 
   // Toggle Inventory Status
@@ -118,7 +148,19 @@ export default function DivisiPerlap({ proker }) {
                       <tr key={item.id} className="hover:bg-white/5 transition-colors">
                         <td className="px-6 py-4 font-semibold text-white">{item.item}</td>
                         <td className="px-4 py-4 text-center">{item.quantity}</td>
-                        <td className="px-4 py-4 text-xs text-slate-400">{item.source}</td>
+                        <td className="px-4 py-4 text-xs text-slate-400">
+                          <div className="capitalize">{item.source}</div>
+                          {item.docUrl && (
+                            <a
+                              href={item.docUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary-400 hover:underline flex items-center gap-1 mt-1 text-[10px]"
+                            >
+                              <FileText className="w-3.5 h-3.5" /> Bukti Audit
+                            </a>
+                          )}
+                        </td>
                         <td className="px-4 py-4 text-xs font-semibold text-slate-300">{item.pic}</td>
                         <td className="px-6 py-4 text-center">
                           <button
@@ -193,10 +235,9 @@ export default function DivisiPerlap({ proker }) {
                     className="select text-xs"
                     disabled={!canEdit}
                   >
-                    <option value="Pinjam BEM">Pinjam BEM</option>
-                    <option value="Pinjam Fakultas">Pinjam Fakultas</option>
-                    <option value="Sewa Vendor">Sewa Vendor</option>
-                    <option value="Beli Baru">Beli Baru</option>
+                    <option value="peminjaman BSP">peminjaman BSP</option>
+                    <option value="sewa">sewa</option>
+                    <option value="beli baru">beli baru</option>
                   </select>
                 </div>
               </div>
@@ -212,12 +253,38 @@ export default function DivisiPerlap({ proker }) {
                   required
                 />
               </div>
+              {(invSource === 'sewa' || invSource === 'beli baru') && (
+                <div>
+                  <label className="block text-slate-400 text-xs mb-1">Upload Bukti Dokumen (Maks 10 MB)</label>
+                  <input
+                    type="file"
+                    onChange={(e) => setProofFile(e.target.files[0])}
+                    className="input text-xs file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-600 file:text-white hover:file:bg-primary-500 cursor-pointer"
+                    disabled={!canEdit || uploading}
+                    required
+                  />
+                  {proofFile && (
+                    <div className="text-[10px] text-slate-400 mt-1">
+                      File: {proofFile.name} ({(proofFile.size / (1024 * 1024)).toFixed(2)} MB)
+                    </div>
+                  )}
+                </div>
+              )}
               <button
                 type="submit"
-                disabled={!canEdit}
-                className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!canEdit || uploading}
+                className="btn-primary w-full py-2.5 flex justify-center text-xs mt-2 disabled:opacity-50 disabled:cursor-not-allowed items-center gap-1.5"
               >
-                <Plus className="w-4 h-4" /> Masukkan Daftar Alat
+                {uploading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Mengunggah Bukti...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" /> Masukkan Daftar Alat
+                  </>
+                )}
               </button>
             </form>
           </div>

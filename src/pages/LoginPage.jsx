@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, signInAnonymously } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase/config';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import LogoBEM from '../assets/logo-bem.png';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -19,9 +20,36 @@ export default function LoginPage() {
     setError('');
     try {
       await signInWithPopup(auth, googleProvider);
-      // useAuth hook akan detect state, App router akan redirect otomatis
     } catch (err) {
       setError('Gagal masuk. Coba lagi.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMockLogin = async (mockProfile) => {
+    setLoading(true);
+    setError('');
+    try {
+      // 1. Sign in anonymously to get a valid request.auth context
+      const credential = await signInAnonymously(auth);
+      const uid = credential.user.uid;
+
+      // 2. Set profile details in Firestore
+      const { doc, setDoc } = await import('firebase/firestore');
+      const { db } = await import('../firebase/config');
+      await setDoc(doc(db, 'users', uid), {
+        ...mockProfile,
+        email: `${mockProfile.name.toLowerCase()}@bem.fasilkom`,
+        photoURL: '',
+        createdAt: new Date().toISOString()
+      }, { merge: true });
+
+      //useAuth will automatically subscribe to the new anonymous user and fetch their profile details
+      navigate('/');
+    } catch (err) {
+      setError('Gagal masuk akun demo. Silakan aktifkan opsi "Anonymous" di Firebase Console -> Authentication -> Sign-in method agar fitur Demo Bypass dapat berfungsi.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -36,10 +64,8 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md animate-slide-up">
         {/* Logo */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-700 shadow-2xl shadow-primary-900/50 mb-4">
-            <span className="text-white font-bold text-2xl">FP</span>
-          </div>
+        <div className="text-center mb-10 flex flex-col items-center">
+          <img src={LogoBEM} alt="BEM Fasilkom UMB" className="w-20 h-20 object-cover rounded-full border-2 border-white/10 mb-4 animate-pulse-slow" />
           <h1 className="text-3xl font-bold text-white tracking-tight">Fasilkom Proker</h1>
           <p className="text-slate-400 mt-2 text-sm leading-relaxed">
             Platform manajemen program kerja<br />
@@ -51,11 +77,11 @@ export default function LoginPage() {
         <div className="card p-8">
           <h2 className="text-xl font-semibold text-white mb-2">Masuk ke Akun Anda</h2>
           <p className="text-slate-400 text-sm mb-8">
-            Gunakan akun Google untuk mengakses workspace kepanitiaan BEM.
+            Gunakan akun Google untuk mengakses platform BEM.
           </p>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm leading-relaxed">
               {error}
             </div>
           )}
@@ -79,7 +105,43 @@ export default function LoginPage() {
             {loading ? 'Memproses...' : 'Masuk dengan Google'}
           </button>
 
-          <p className="text-slate-500 text-xs text-center mt-6">
+          <div className="relative flex py-5 items-center">
+            <div className="flex-grow border-t border-white/5"></div>
+            <span className="flex-shrink mx-4 text-slate-500 text-xs font-semibold uppercase tracking-wider">Akun Demo</span>
+            <div className="flex-grow border-t border-white/5"></div>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => handleMockLogin(
+                { name: 'Daffa', jabatan: 'Ketua BEM', divisi: 'BPH' }
+              )}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-primary-600/10 hover:bg-primary-600/20 text-primary-400 text-xs font-semibold rounded-xl border border-primary-500/20 transition-all active:scale-95"
+            >
+              Masuk sebagai BPH / Ketua BEM (Daffa)
+            </button>
+            <button
+              onClick={() => handleMockLogin(
+                { name: 'Fikri', jabatan: 'Kadep PSDM', divisi: 'PSDM' }
+              )}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-xs font-semibold rounded-xl border border-indigo-500/20 transition-all active:scale-95"
+            >
+              Masuk sebagai Ketua Pelaksana (Fikri)
+            </button>
+            <button
+              onClick={() => handleMockLogin(
+                { name: 'Budi', jabatan: 'Anggota Kominfo', divisi: 'KOMINFO' }
+              )}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-slate-700/30 hover:bg-slate-700/50 text-slate-300 text-xs font-semibold rounded-xl border border-white/5 transition-all active:scale-95"
+            >
+              Masuk sebagai Anggota Panitia (Budi)
+            </button>
+          </div>
+
+          <p className="text-slate-500 text-[10px] text-center mt-6">
             Hanya anggota BEM FASILKOM UMB yang memiliki akses ke platform ini.
           </p>
         </div>

@@ -5,10 +5,10 @@ import { auth, db } from '../firebase/config';
 
 // Helper to get or create unique device ID
 function getOrCreateDeviceId() {
-  let id = localStorage.getItem('prokerku_device_id');
+  let id = localStorage.getItem('FasilkomProker_device_id');
   if (!id) {
     id = 'dev_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-    localStorage.setItem('prokerku_device_id', id);
+    localStorage.setItem('FasilkomProker_device_id', id);
   }
   return id;
 }
@@ -32,18 +32,18 @@ export function useAuth() {
             const data = profileSnap.data();
             const activeDevices = data.activeDevices || [];
             const deviceId = getOrCreateDeviceId();
-            const isSessionActive = sessionStorage.getItem('prokerku_session_active') === 'true';
+            const isSessionActive = sessionStorage.getItem('FasilkomProker_session_active') === 'true';
 
             if (activeDevices.includes(deviceId)) {
               // Current device is already authorized
               setProfile(data);
               setDeviceBlocked(false);
-              sessionStorage.setItem('prokerku_session_active', 'true');
+              sessionStorage.setItem('FasilkomProker_session_active', 'true');
             } else if (!isSessionActive && activeDevices.length < 2) {
               // New tab/session, and space is available -> register device
               setProfile(data);
               setDeviceBlocked(false);
-              sessionStorage.setItem('prokerku_session_active', 'true');
+              sessionStorage.setItem('FasilkomProker_session_active', 'true');
               try {
                 await updateDoc(profileRef, {
                   activeDevices: arrayUnion(deviceId)
@@ -55,7 +55,7 @@ export function useAuth() {
               // Blocked (exceeded limit of 2 devices or kicked by another device)
               setProfile(data);
               setDeviceBlocked(true);
-              sessionStorage.removeItem('prokerku_session_active');
+              sessionStorage.removeItem('FasilkomProker_session_active');
             }
           } else {
             setProfile(null); // No profile yet -> onboarding
@@ -84,7 +84,7 @@ export function useAuth() {
     if (!user) return;
     const deviceId = getOrCreateDeviceId();
     const profileRef = doc(db, 'users', user.uid);
-    sessionStorage.setItem('prokerku_session_active', 'true');
+    sessionStorage.setItem('FasilkomProker_session_active', 'true');
     setDeviceBlocked(false);
     try {
       await updateDoc(profileRef, {
@@ -107,7 +107,7 @@ export function useAuth() {
         console.error("Gagal menghapus device id saat logout:", err);
       }
     }
-    sessionStorage.removeItem('prokerku_session_active');
+    sessionStorage.removeItem('FasilkomProker_session_active');
     await signOut(auth);
   };
 

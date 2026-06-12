@@ -3,8 +3,7 @@ import { useProkerSubcollection } from '../../../hooks/useProker';
 import { Flame, Check, Plus, Trash, ShieldAlert, AlertOctagon, HelpCircle } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 
-export default function DDay({ proker, updateProkerDetails }) {
-  const { profile } = useAuth();
+export default function DDay({ proker, profile, updateProkerDetails }) {
 
   // Subcollection for D-Day checklist
   const { data: checklist, addItem: addChecklistItem, updateItem: updateChecklistItem, deleteItem: deleteChecklistItem } = 
@@ -18,6 +17,8 @@ export default function DDay({ proker, updateProkerDetails }) {
   const [isActivatingPanic, setIsActivatingPanic] = useState(false);
 
   // Trigger Panic Active
+  if (!profile) return null;
+
   const handleTriggerPanic = async (e) => {
     e.preventDefault();
     if (!panicDesc.trim()) return;

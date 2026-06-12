@@ -3,8 +3,7 @@ import { useProkerSubcollection } from '../../../hooks/useProker';
 import { Megaphone, Calendar, MapPin, Users, Clock, Plus, Trash } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 
-export default function Overview({ proker, updateProkerDetails }) {
-  const { profile } = useAuth();
+export default function Overview({ proker, profile, updateProkerDetails }) {
   const { data: announcements, addItem: addAnnouncement, deleteItem: deleteAnnouncement } = 
     useProkerSubcollection(proker.id, 'announcements', 'createdAt', 'desc');
 
@@ -32,6 +31,8 @@ export default function Overview({ proker, updateProkerDetails }) {
     return () => clearInterval(interval);
   }, [proker.date]);
 
+  if (!profile) return null;
+
   const handleAddAnnouncement = async (e) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) return;
@@ -51,7 +52,7 @@ export default function Overview({ proker, updateProkerDetails }) {
     <div className="space-y-6">
       {/* Welcome & Quick Info */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 card p-6 bg-gradient-to-r from-primary-900/30 to-surface-800 flex flex-col justify-between">
+        <div className={`lg:col-span-2 card p-6 flex flex-col justify-between ${localStorage.getItem('FasilkomProker-theme') === 'light' ? 'bg-surface-800 shadow-md' : 'bg-gradient-to-r from-primary-900/30 to-surface-800'}`}>
           <div>
             <span className="badge bg-primary-600/20 text-primary-400 border border-primary-500/20 mb-3">
               Informasi Umum
@@ -67,7 +68,7 @@ export default function Overview({ proker, updateProkerDetails }) {
         </div>
 
         {/* Countdown Card */}
-        <div className="card p-6 flex flex-col items-center justify-center text-center bg-gradient-to-br from-indigo-950/20 to-surface-800">
+        <div className={`card p-6 flex flex-col items-center justify-center text-center ${localStorage.getItem('FasilkomProker-theme') === 'light' ? 'bg-surface-800 shadow-md' : 'bg-gradient-to-br from-indigo-950/20 to-surface-800'}`}>
           <Clock className="w-8 h-8 text-primary-400 mb-3 animate-pulse-slow" />
           <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1">Hitung Mundur Acara</h3>
           <div className="text-xl font-extrabold text-white leading-tight tracking-tight mt-1">

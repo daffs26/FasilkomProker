@@ -3,8 +3,7 @@ import { useProkerSubcollection } from '../../../hooks/useProker';
 import { Users, DollarSign, FileSpreadsheet, Plus, Trash, CheckCircle2, Copy, Printer, FileText } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 
-export default function BPH({ proker, updateProkerDetails }) {
-  const { profile } = useAuth();
+export default function BPH({ proker, profile, updateProkerDetails }) {
   const [subTab, setSubTab] = useState('structure');
 
   // Subcollections
@@ -25,6 +24,8 @@ export default function BPH({ proker, updateProkerDetails }) {
   const [rabDiv, setRabDiv] = useState('BPH');
 
   // Proposal Status
+  if (!profile) return null;
+
   const handleProposalStatusChange = async (status) => {
     try {
       await updateProkerDetails({ proposalStatus: status });
@@ -69,6 +70,29 @@ export default function BPH({ proker, updateProkerDetails }) {
     setRabItem('');
     setRabQty('');
     setRabPrice('');
+  };
+
+  const handleSeedDefaultRoles = async () => {
+    const defaultRoles = [
+      { name: 'Zian Farras', role: 'Ketua Pelaksana', division: 'BPH' },
+      { name: 'Siti Rahma', role: 'Sekretaris Panitia', division: 'BPH' },
+      { name: 'Ahmad Fauzi', role: 'Bendahara Panitia', division: 'BPH' },
+      { name: 'Rian Hidayat', role: 'Koordinator Acara', division: 'Acara' },
+      { name: 'Fajar Pratama', role: 'Koordinator Perlengkapan', division: 'Perlengkapan' },
+      { name: 'Nabila Putri', role: 'Koordinator Humas', division: 'Humas' },
+      { name: 'Dimas Saputra', role: 'Koordinator PDD', division: 'PDD' },
+      { name: 'Siti Aminah', role: 'Koordinator Konsumsi', division: 'Konsumsi' },
+      { name: 'Lutfi Hakim', role: 'Koordinator Kesehatan', division: 'Kesehatan' }
+    ];
+
+    try {
+      for (const item of defaultRoles) {
+        await addRole(item);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Gagal membuat struktur panitia default.');
+    }
   };
 
   // Budget Calculations
@@ -137,7 +161,7 @@ Waktu         : 08.00 - Selesai
 Tempat        : ${proker.location}
 
 E. RENCANA ANGGARAN BIAYA (RAB)
-Total kebutuhan anggaran adalah sebesar Rp ${totalSpent.toLocaleString('id-ID')} (Rincian terlampir pada sistem dashboard RAB ProkerKU).
+Total kebutuhan anggaran adalah sebesar Rp ${totalSpent.toLocaleString('id-ID')} (Rincian terlampir pada sistem dashboard RAB FasilkomProker).
 
 --------------------------------------------------------------------------------
 Demikian proposal ini diajukan untuk mendapatkan persetujuan dan dukungan Fakultas.
@@ -223,8 +247,21 @@ Ketua Pelaksana
             </h3>
 
             {roles.length === 0 ? (
-              <div className="card p-8 text-center text-slate-500 text-sm">
-                Belum ada susunan panitia inti yang didaftarkan.
+              <div className="card p-8 text-center flex flex-col items-center justify-center border-dashed border-white/10 bg-surface-800/30">
+                <Users className="w-10 h-10 text-slate-600 mb-3" />
+                <h4 className="font-semibold text-white">Belum ada Susunan Panitia</h4>
+                <p className="text-xs text-slate-400 mt-1 max-w-sm mb-4">
+                  Susunan panitia inti untuk proker ini belum dibuat.
+                </p>
+                {profile?.divisi === 'BPH' && (
+                  <button
+                    type="button"
+                    onClick={handleSeedDefaultRoles}
+                    className="btn-secondary text-xs px-4 py-2"
+                  >
+                    Isi Struktur Panitia Default
+                  </button>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

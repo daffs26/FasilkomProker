@@ -1,4 +1,13 @@
 /** @type {import('tailwindcss').Config} */
+function withOpacity(variableName) {
+  return ({ opacityValue }) => {
+    if (opacityValue !== undefined) {
+      return `rgba(var(${variableName}), ${opacityValue})`;
+    }
+    return `rgb(var(${variableName}))`;
+  };
+}
+
 export default {
   content: [
     "./index.html",
@@ -11,24 +20,37 @@ export default {
       },
       colors: {
         primary: {
-          50:  '#f0f4ff',
-          100: '#e0eaff',
-          200: '#c7d8ff',
-          300: '#a5bcff',
-          400: '#8196ff',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4038d4',
-          800: '#3630ac',
-          900: '#312e88',
+          50:  withOpacity('--primary-50'),
+          100: withOpacity('--primary-100'),
+          200: withOpacity('--primary-200'),
+          300: withOpacity('--primary-300'),
+          400: withOpacity('--primary-400'),
+          500: withOpacity('--primary-500'),
+          600: withOpacity('--primary-600'),
+          700: withOpacity('--primary-700'),
+          800: withOpacity('--primary-800'),
+          900: withOpacity('--primary-900'),
         },
         surface: {
-          900: '#0f0f1a',
-          800: '#16162a',
-          700: '#1e1e35',
-          600: '#252540',
-          500: '#2e2e50',
+          900: withOpacity('--surface-900'),
+          800: withOpacity('--surface-800'),
+          700: withOpacity('--surface-700'),
+          600: withOpacity('--surface-600'),
+          500: withOpacity('--surface-500'),
         },
+        slate: {
+          50:  withOpacity('--slate-50'),
+          100: withOpacity('--slate-100'),
+          200: withOpacity('--slate-200'),
+          300: withOpacity('--slate-300'),
+          400: withOpacity('--slate-400'),
+          500: withOpacity('--slate-500'),
+          600: withOpacity('--slate-600'),
+          700: withOpacity('--slate-700'),
+          800: withOpacity('--slate-800'),
+          900: withOpacity('--slate-900'),
+        },
+        white: withOpacity('--white-color'),
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',

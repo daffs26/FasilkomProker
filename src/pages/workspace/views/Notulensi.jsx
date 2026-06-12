@@ -3,8 +3,7 @@ import { useProkerSubcollection } from '../../../hooks/useProker';
 import { FileText, Plus, Trash, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 
-export default function Notulensi({ proker }) {
-  const { profile } = useAuth();
+export default function Notulensi({ proker, profile }) {
   const { data: minutes, addItem: addMinutes, deleteItem: deleteMinutes } = 
     useProkerSubcollection(proker.id, 'notulensi', 'createdAt', 'desc');
 
