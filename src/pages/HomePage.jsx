@@ -639,7 +639,7 @@ export default function HomePage() {
                             <span className={`badge ${getStatusColor(proker.status)}`}>
                               {proker.status}
                             </span>
-                            {profile?.divisi === 'BPH' && (
+                            {profile?.jabatan === 'Ketua BEM' && (
                               <button
                                 onClick={(e) => handleDeleteProker(e, proker.id, proker.name)}
                                 className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
@@ -1278,6 +1278,12 @@ export default function HomePage() {
                 type="button"
                 disabled={deleteConfirmationText !== prokerToDelete.name}
                 onClick={async () => {
+                  if (profile?.jabatan !== 'Ketua BEM') {
+                    setError('Hanya Ketua BEM yang memiliki otorisasi untuk menghapus program kerja.');
+                    setProkerToDelete(null);
+                    setDeleteConfirmationText('');
+                    return;
+                  }
                   const id = prokerToDelete.id;
                   const name = prokerToDelete.name;
                   setProkerToDelete(null);
