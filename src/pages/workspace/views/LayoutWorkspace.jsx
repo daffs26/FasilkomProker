@@ -71,12 +71,12 @@ export default function LayoutWorkspace({ proker, profile }) {
   const handleCanvasClick = async (e) => {
     if (!canEdit || !activeLayoutId) return;
 
+    // ONLY add item if user clicked DIRECTLY on canvas background,
+    // NOT on an existing item or its buttons/resize handles!
+    if (e.target !== canvasRef.current) return;
+
     const typeObj = ITEM_TYPES.find((t) => t.value === selectedType);
     const label = itemText.trim() || (typeObj ? typeObj.label : 'Barang');
-
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = Math.round(e.clientX - rect.left - 15);
-    const y = Math.round(e.clientY - rect.top - 15);
 
     // Default sizes based on type
     let defaultWidth = 120;
@@ -85,6 +85,18 @@ export default function LayoutWorkspace({ proker, profile }) {
     else if (selectedType === 'sound') { defaultWidth = 60; defaultHeight = 60; }
     else if (selectedType === 'table') { defaultWidth = 140; defaultHeight = 50; }
     else if (selectedType === 'chair') { defaultWidth = 45; defaultHeight = 45; }
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const canvasWidth = canvasRef.current.clientWidth;
+    const canvasHeight = 500;
+
+    // Center the item at click position
+    let x = Math.round(e.clientX - rect.left - (defaultWidth / 2));
+    let y = Math.round(e.clientY - rect.top - (defaultHeight / 2));
+
+    // Clamp coordinates to keep inside canvas
+    x = Math.max(0, Math.min(x, canvasWidth - defaultWidth));
+    y = Math.max(0, Math.min(y, canvasHeight - defaultHeight));
 
     await addFloorItem({
       text: label,
@@ -102,6 +114,11 @@ export default function LayoutWorkspace({ proker, profile }) {
   // Drag and Drop handlers for Floor Plan items
   const handleDragStart = (e, itemId) => {
     e.dataTransfer.setData('text/plain', itemId);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    e.dataTransfer.setData('offsetX', offsetX.toString());
+    e.dataTransfer.setData('offsetY', offsetY.toString());
   };
 
   const handleDragOver = (e) => {
@@ -114,9 +131,33 @@ export default function LayoutWorkspace({ proker, profile }) {
     const itemId = e.dataTransfer.getData('text/plain');
     if (!itemId) return;
 
+    const offsetX = parseFloat(e.dataTransfer.getData('offsetX')) || 0;
+    const offsetY = parseFloat(e.dataTransfer.getData('offsetY')) || 0;
+
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = Math.round(e.clientX - rect.left - 15);
-    const y = Math.round(e.clientY - rect.top - 15);
+    const canvasWidth = canvasRef.current.clientWidth;
+    const canvasHeight = 500;
+
+    const item = floorPlan.find(item => item.id === itemId);
+    let itemWidth = 120;
+    let itemHeight = 50;
+    if (item) {
+      let defaultWidth = 120;
+      let defaultHeight = 50;
+      if (item.type === 'stage') { defaultWidth = 180; defaultHeight = 80; }
+      else if (item.type === 'sound') { defaultWidth = 60; defaultHeight = 60; }
+      else if (item.type === 'table') { defaultWidth = 140; defaultHeight = 50; }
+      else if (item.type === 'chair') { defaultWidth = 45; defaultHeight = 45; }
+      itemWidth = item.width || defaultWidth;
+      itemHeight = item.height || defaultHeight;
+    }
+
+    let x = Math.round(e.clientX - rect.left - offsetX);
+    let y = Math.round(e.clientY - rect.top - offsetY);
+
+    // Clamp values to keep item inside canvas
+    x = Math.max(0, Math.min(x, canvasWidth - itemWidth));
+    y = Math.max(0, Math.min(y, canvasHeight - itemHeight));
 
     try {
       await updateFloorItem(itemId, { x, y });
