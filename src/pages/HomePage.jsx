@@ -88,6 +88,7 @@ export default function HomePage() {
   const [docToDelete, setDocToDelete] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [fullActivitiesList, setFullActivitiesList] = useState([]);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
 
   // Fetch prokers in real-time
   useEffect(() => {
@@ -382,6 +383,7 @@ export default function HomePage() {
 
   const handleDeleteProker = async (e, prokerId, prokerName) => {
     e.stopPropagation(); // Cegah click card redirect
+    setDeleteConfirmationText('');
     setProkerToDelete({ id: prokerId, name: prokerName });
   };
 
@@ -1244,25 +1246,42 @@ export default function HomePage() {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-white mb-2">Hapus Program Kerja?</h3>
-                <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                <p className="text-slate-400 text-sm leading-relaxed mb-4">
                   Apakah Anda yakin ingin menghapus program kerja <span className="text-white font-semibold">"{prokerToDelete.name}"</span> beserta semua datanya? Tindakan ini tidak dapat dibatalkan.
                 </p>
+                <div className="space-y-2 mt-4">
+                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider">
+                    Ketik nama program kerja untuk mengonfirmasi:
+                  </label>
+                  <input
+                    type="text"
+                    value={deleteConfirmationText}
+                    onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                    placeholder={`Ketik "${prokerToDelete.name}"`}
+                    className="input w-full bg-surface-900 border border-white/10 text-slate-100 text-xs"
+                  />
+                </div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5 mt-6">
               <button
                 type="button"
-                onClick={() => setProkerToDelete(null)}
+                onClick={() => {
+                  setProkerToDelete(null);
+                  setDeleteConfirmationText('');
+                }}
                 className="btn-secondary py-2 px-4 text-sm"
               >
                 Batal
               </button>
               <button
                 type="button"
+                disabled={deleteConfirmationText !== prokerToDelete.name}
                 onClick={async () => {
                   const id = prokerToDelete.id;
                   const name = prokerToDelete.name;
                   setProkerToDelete(null);
+                  setDeleteConfirmationText('');
                   try {
                     await deleteDoc(doc(db, 'prokers', id));
                     await addDoc(collection(db, 'activities'), {
@@ -1278,7 +1297,11 @@ export default function HomePage() {
                     setError('Gagal menghapus program kerja.');
                   }
                 }}
-                className="bg-red-600 hover:bg-red-500 text-white rounded-xl py-2 px-4 text-sm font-semibold transition-all duration-200"
+                className={`py-2 px-4 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                  deleteConfirmationText === prokerToDelete.name
+                    ? 'bg-red-600 hover:bg-red-500 text-white cursor-pointer'
+                    : 'bg-red-600/20 text-red-400/40 cursor-not-allowed border border-red-500/10'
+                }`}
               >
                 Ya, Hapus
               </button>
